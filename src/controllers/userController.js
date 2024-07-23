@@ -1,4 +1,7 @@
 import Usuario from '../models/userModel.js';
+import bcrypt from 'bcrypt';
+
+const saltRounds = 10; 
 
 export const getAllUsuarios = async (req, res) => {
   try {
@@ -9,7 +12,6 @@ export const getAllUsuarios = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
-
 export const getUsuarioById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -27,7 +29,19 @@ export const getUsuarioById = async (req, res) => {
 export const createUsuario = async (req, res) => {
   const { id_rol, nombre, apellido, email, password_hash } = req.body;
   try {
-    const newUsuario = await Usuario.create({ id_rol, nombre, apellido, email, password_hash });
+    //Debemos verificar que no exista ya un usuario con el mismo email ya que este campo será
+    //una de las credenciales para el inicio de sesión.
+    const existingUsuario = await Usuario.findOne({ where: { email } });
+    if (existingUsuario) {
+      return res.status(400).json({ error: 'El email ya está en uso' });
+    }
+    const hashedPassword = await bcrypt.hash(password_hash, saltRounds);
+    const newUsuario = await Usuario.create({ 
+      id_rol, 
+      nombre,
+      apellido, 
+      email, 
+      password_hash: hashedPassword });
     res.status(201).json(newUsuario);
   } catch (err) {
     console.error('Error al crear el usuario:', err);
