@@ -1,14 +1,19 @@
 import express from 'express';
 import sequelize from './config/sequelize.js';
 import usuarioRoutes from './routes/userRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import cookieParser from 'cookie-parser';
+import 'dotenv/config';
 
 const app = express();
-const PORT = 3000;
 
 app.use(express.json());
+app.use(cookieParser());
+
 
 // Usar las rutas definidas
 app.use('/api', usuarioRoutes);
+app.use('/auth', authRoutes);
 
 // Sincronizar con la base de datos
 sequelize.authenticate()
@@ -22,8 +27,8 @@ sequelize.authenticate()
 sequelize.sync()
   .then(() => {
     console.log('Modelo sincronizado con la base de datos.');
-    app.listen(PORT, () => {
-      console.log(`Servidor escuchando en http://localhost:${PORT}`);
+    app.listen(process.env.PORT, () => {
+      console.log(`Servidor escuchando en http://localhost:${process.env.PORT}`);
     });
   })
   .catch(err => {
