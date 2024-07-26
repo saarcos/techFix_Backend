@@ -14,3 +14,10 @@ export const checkAuth = async (req, res) => {
     res.status(401).json({ isAuthenticated: false });
   }
 };
+
+export const logout = (req, res) => {
+  res.clearCookie('access_token', {
+    httpOnly: true,
+    });
+  res.status(200).json({ message: 'Logout exitoso' });
+};

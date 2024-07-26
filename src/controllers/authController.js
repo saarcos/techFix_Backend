@@ -23,22 +23,18 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: false,
       });
-    res.status(200).json({ message: 'Autenticación exitosa' });
+    res.status(200).json({ 
+      message: 'Autenticación exitosa',
+      user: {
+        id: usuario.id_usuario,
+        name: usuario.nombre, // Asegúrate de que este campo existe en tu modelo
+        email: usuario.email
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
-
-export const logout = (req, res) => {
-  res.clearCookie('access_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'None'
-  });
-  res.status(200).json({ message: 'Logout exitoso' });
-};
-
 
 export const protectedRoute = (req, res) => {
     res.json({ message: 'This is a protected route', user: req.user });
