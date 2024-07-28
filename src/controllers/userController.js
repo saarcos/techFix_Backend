@@ -56,7 +56,8 @@ export const createUsuario = async (req, res) => {
       apellido, 
       email, 
       password_hash: hashedPassword });
-    res.status(201).json(newUsuario);
+     const { password_hash: _, ...userWithoutPassword } = newUsuario.toJSON();
+     res.status(201).json(userWithoutPassword);
   } catch (err) {
     console.error('Error al crear el usuario:', err);
     res.status(500).json({ error: 'Error interno del servidor' });

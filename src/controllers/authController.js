@@ -15,7 +15,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: 'Contraseña incorrecta' });
     }
     const token = jwt.sign(
-      { id_usuario: usuario.id_usuario, id_rol: usuario.id_rol, email: usuario.email },
+      { id_usuario: usuario.id_usuario, id_rol: usuario.id_rol, email: usuario.email, nombre: usuario.nombre },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -27,7 +27,7 @@ export const login = async (req, res) => {
       message: 'Autenticación exitosa',
       user: {
         id: usuario.id_usuario,
-        name: usuario.nombre, // Asegúrate de que este campo existe en tu modelo
+        nombre: usuario.nombre, // Asegúrate de que este campo existe en tu modelo
         email: usuario.email
       }
     });
