@@ -1,4 +1,5 @@
 import Usuario from '../models/userModel.js';
+import Rol from '../models/roleModel.js';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 
@@ -14,7 +15,13 @@ const usuarioSchema = z.object({
 
 export const getAllUsuarios = async (req, res) => {
   try {
-    const usuarios = await Usuario.findAll();
+    const usuarios = await Usuario.findAll({
+      include: {
+        model: Rol,
+        as: 'rol',
+        attributes: ['nombrerol'], // Solo incluye el nombre del rol
+      },
+    });
     res.json(usuarios);
   } catch (err) {
     console.error('Error al obtener usuarios:', err);
@@ -24,7 +31,13 @@ export const getAllUsuarios = async (req, res) => {
 export const getUsuarioById = async (req, res) => {
   const { id } = req.params;
   try {
-    const usuario = await Usuario.findByPk(id);
+    const usuario = await Usuario.findByPk(id, {
+      include: {
+        model: Rol,
+        as: 'rol',
+        attributes: ['nombrerol'], // Solo incluye el nombre del rol
+      },
+    });
     if (usuario) {
       res.json(usuario);
     } else {

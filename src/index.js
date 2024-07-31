@@ -2,6 +2,7 @@ import express from 'express';
 import sequelize from './config/sequelize.js';
 import usuarioRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import roleRoutes from './routes/roleRoutes.js'
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import 'dotenv/config';
@@ -19,8 +20,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Usar las rutas definidas
-app.use('/api', usuarioRoutes);
 app.use('/auth', authRoutes);
+app.use('/api', usuarioRoutes);
+app.use('/api', roleRoutes); 
 
 // Sincronizar con la base de datos
 sequelize.authenticate()
