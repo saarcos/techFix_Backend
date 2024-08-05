@@ -25,17 +25,22 @@ export const login = async (req, res) => {
       });
     res.status(200).json({ 
       message: 'Autenticación exitosa',
+      token: token,
       user: {
         id: usuario.id_usuario,
-        nombre: usuario.nombre, // Asegúrate de que este campo existe en tu modelo
-        email: usuario.email
+        nombre: usuario.nombre, 
+        email: usuario.email,
+        id_rol: usuario.id_rol
       }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
-export const protectedRoute = (req, res) => {
-    res.json({ message: 'This is a protected route', user: req.user });
+export const logout = (req, res) => {
+  res.clearCookie('access_token', {
+    httpOnly: true,
+    });
+  res.status(200).json({ message: 'Logout exitoso' });
 };
+
