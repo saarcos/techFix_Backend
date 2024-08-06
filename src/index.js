@@ -3,6 +3,11 @@ import sequelize from './config/sequelize.js';
 import usuarioRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import roleRoutes from './routes/roleRoutes.js'
+import clientRoutes from './routes/clientRoutes.js';
+import brandRoutes from './routes/brandRoutes.js';
+import modelRoutes from './routes/modelRoutes.js';
+import tipoEquipoRoutes from './routes/tipoEquipoRoutes.js';
+import equipoRoutes from './routes/equipoRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import 'dotenv/config';
@@ -23,6 +28,11 @@ app.use(cors(corsOptions));
 app.use('/auth', authRoutes);
 app.use('/api', usuarioRoutes);
 app.use('/api', roleRoutes); 
+app.use('/api', clientRoutes); 
+app.use('/api', brandRoutes); 
+app.use('/api', modelRoutes); 
+app.use('/api', tipoEquipoRoutes); 
+app.use('/api', equipoRoutes); 
 
 // Sincronizar con la base de datos
 sequelize.authenticate()
@@ -31,7 +41,7 @@ sequelize.authenticate()
   })
   .catch(err => {
     console.error('No se pudo conectar a la base de datos:', err);
-  });
+});
 
 sequelize.sync()
   .then(() => {
@@ -42,4 +52,4 @@ sequelize.sync()
   })
   .catch(err => {
     console.error('Error al sincronizar el modelo con la base de datos:', err);
-  });
+});
