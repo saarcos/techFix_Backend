@@ -6,7 +6,8 @@ const clienteSchema = z.object({
     apellido: z.string().min(1, 'El apellido es obligatorio').max(100, 'El apellido no debe exceder 100 caracteres'),
     cedula: z.string().min(1, 'La cédula es obligatoria').max(13, 'La cédula no debe exceder 13 caracteres'),
     correo: z.string().email('Email inválido'),
-    celular: z.string().min(10, 'El número de teléfono tiene 10 caracteres').max(10,'El número de teléfono tiene 10 caracteres').optional(),
+    celular: z.string().min(10, 'El número de teléfono tiene 10 caracteres').max(10,'El número de teléfono tiene 10 caracteres'),
+    tipo_cliente: z.enum(['Persona', 'Empresa'], 'El tipo de cliente debe ser "Persona" o "Empresa"')
 });
 
 // Crear un nuevo cliente
@@ -77,27 +78,7 @@ export const updateClient = async (req, res) => {
     if (!result.success) {
         return res.status(400).json({ errors: result.error.errors });
     }
-    const { cedula, correo, celular } = result.data;
-
     try {
-        const existingCedula = await Cliente.findOne({ where: { cedula: cedula } });
-        if (existingCedula) {
-            return res.status(400).json({ error: 'Ya existe un cliente con esta cédula' });
-        }
-
-        if (correo) {
-            const existingCorreo = await Cliente.findOne({ where: { correo: correo } });
-            if (existingCorreo) {
-                return res.status(400).json({ error: 'Ya existe un cliente con este correo' });
-            }
-        }
-
-        if (celular) {
-            const existingCelular = await Cliente.findOne({ where: { celular: celular } });
-            if (existingCelular) {
-                return res.status(400).json({ error: 'Ya existe un cliente con este número de celular' });
-            }
-        }
         const client = await Cliente.findByPk(id);
         if (client) {
             await client.update(result.data);

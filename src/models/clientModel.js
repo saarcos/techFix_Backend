@@ -35,6 +35,12 @@ const Cliente = sequelize.define('cliente', {
         allowNull: false,
         unique: true,
         field: 'celular',
+    },
+    tipo_cliente: {
+      type: DataTypes.ENUM('Persona', 'Empresa'),
+      allowNull: false,
+      defaultValue: 'Persona',
+      field: 'tipo_cliente'
     }
   }, {
     tableName: 'cliente',
