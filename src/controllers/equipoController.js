@@ -117,10 +117,6 @@ export const getEquipoById = async (req, res) => {
     const { id_cliente, id_tipoe, id_marca, id_modelo, nserie, descripcion } = result.data;
   
     try {
-        const existingNserie = await Equipo.findOne({ where: { nserie: nserie } });
-        if (existingNserie) {
-            return res.status(400).json({ error: 'Ya existe un equipo con ese número de serie' });
-        }
         const equipo = await Equipo.findByPk(id);
         if (equipo) {
             await equipo.update({ id_cliente, id_tipoe,  id_marca,  id_modelo, nserie, descripcion });
