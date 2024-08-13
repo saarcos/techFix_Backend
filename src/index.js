@@ -7,6 +7,7 @@ import clientRoutes from './routes/clientRoutes.js';
 import brandRoutes from './routes/brandRoutes.js';
 import modelRoutes from './routes/modelRoutes.js';
 import tipoEquipoRoutes from './routes/tipoEquipoRoutes.js';
+import brandModelRoutes from './routes/brandModelRoutes.js';
 import equipoRoutes from './routes/equipoRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -33,6 +34,8 @@ app.use('/api', brandRoutes);
 app.use('/api', modelRoutes); 
 app.use('/api', tipoEquipoRoutes); 
 app.use('/api', equipoRoutes); 
+app.use('/api', brandModelRoutes);
+
 
 // Sincronizar con la base de datos
 sequelize.authenticate()
