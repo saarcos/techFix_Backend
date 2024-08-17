@@ -9,6 +9,10 @@ import modelRoutes from './routes/modelRoutes.js';
 import tipoEquipoRoutes from './routes/tipoEquipoRoutes.js';
 import brandModelRoutes from './routes/brandModelRoutes.js';
 import equipoRoutes from './routes/equipoRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import productCategoryRoutes from './routes/productCategoryRoutes.js';
+import serviceRoutes from './routes/serviceRoutes.js';
+import serviceCategoryRoutes from './routes/serviceCategoryRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import 'dotenv/config';
@@ -35,6 +39,10 @@ app.use('/api', modelRoutes);
 app.use('/api', tipoEquipoRoutes); 
 app.use('/api', equipoRoutes); 
 app.use('/api', brandModelRoutes);
+app.use('/api', productRoutes);
+app.use('/api', productCategoryRoutes);
+app.use('/api', serviceRoutes);
+app.use('/api', serviceCategoryRoutes);
 
 
 // Sincronizar con la base de datos
