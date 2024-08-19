@@ -26,10 +26,21 @@ const Producto = sequelize.define('producto', {
     allowNull: false,
     field: 'codigoproducto',
   },
-  precio: {
+  precioSinIVA: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    field: 'precio',
+    field: 'preciosiniva',
+  },
+  precioFinal: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    field: 'preciofinal',
+  },
+  iva: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 12,  // IVA por defecto del 12%
+    field: 'iva',
   },
   stock: {
     type: DataTypes.INTEGER,
