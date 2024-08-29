@@ -26,7 +26,7 @@ export const ordenTrabajoSchema = z.object({
 });
 export const getOrdenesTrabajo = async (req, res) => {
   try {
-    const ordenes = await OrdenTrabajo.scope('withNumeroOrden').findAll({
+    const ordenes = await OrdenTrabajo.findAll({
       include: [
         {
           model: ImagenOrden,
@@ -69,13 +69,34 @@ export const getOrdenesTrabajo = async (req, res) => {
   }
 };
 export const createOrdenTrabajo = async (req, res) => {
-    const result = ordenTrabajoSchema.safeParse(req.body);
-  
-    if (!result.success) {
-      return res.status(400).json({ errors: result.error.errors });
-    }
-  
-    const {
+  const result = ordenTrabajoSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({ errors: result.error.errors });
+  }
+
+  const {
+    id_equipo,
+    id_usuario,
+    id_cliente,
+    area,
+    prioridad,
+    descripcion,
+    estado,
+    fecha_prometida,
+    presupuesto,
+    adelanto,
+    total,
+    confirmacion,
+    passwordequipo,
+    imagenes,
+  } = result.data;
+
+  const transaction = await sequelize.transaction(); // Definimos la transacción correctamente
+
+  try {
+    // Crear la nueva orden de trabajo
+    const nuevaOrden = await OrdenTrabajo.create({
       id_equipo,
       id_usuario,
       id_cliente,
@@ -89,48 +110,27 @@ export const createOrdenTrabajo = async (req, res) => {
       total,
       confirmacion,
       passwordequipo,
-      imagenes,
-    } = result.data;
-  
-    const transaction = await sequelize.transaction(); // Definimos la transacción correctamente
-  
-    try {
-      // Crear la nueva orden de trabajo
-      const nuevaOrden = await OrdenTrabajo.create({
-        id_equipo,
-        id_usuario,
-        id_cliente,
-        area,
-        prioridad,
-        descripcion,
-        estado,
-        fecha_prometida,
-        presupuesto,
-        adelanto,
-        total,
-        confirmacion,
-        passwordequipo,
-      }, { transaction });
-  
-      // Si hay imágenes, crearlas y asociarlas con la orden
-      if (imagenes && imagenes.length > 0) {
-        const imagenesData = imagenes.map(url => ({
-          id_orden: nuevaOrden.id_orden,
-          url_imagen: url,
-        }));
-  
-        await ImagenOrden.bulkCreate(imagenesData, { transaction });
-      }
-  
-      // Confirmar la transacción
-      await transaction.commit();
-  
-      res.status(201).json(nuevaOrden);
-    } catch (error) {
-      // Si hay un error, revertir la transacción
-      await transaction.rollback();
-      res.status(500).json({ error: error.message });
+    }, { transaction });
+
+    // Si hay imágenes, crearlas y asociarlas con la orden
+    if (imagenes && imagenes.length > 0) {
+      const imagenesData = imagenes.map(url => ({
+        id_orden: nuevaOrden.id_orden,
+        url_imagen: url,
+      }));
+
+      await ImagenOrden.bulkCreate(imagenesData, { transaction });
     }
+
+    // Confirmar la transacción
+    await transaction.commit();
+
+    res.status(201).json(nuevaOrden);
+  } catch (error) {
+    // Si hay un error, revertir la transacción
+    await transaction.rollback();
+    res.status(500).json({ error: error.message });
+  }
 };
 export const updateOrdenTrabajo = async (req, res) => {
     const { id_orden } = req.params;

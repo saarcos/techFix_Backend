@@ -25,7 +25,7 @@ const OrdenTrabajo = sequelize.define('ordentrabajo', {
   },
   numero_orden: {
     type: DataTypes.STRING(50),
-    allowNull: false,
+    allowNull: true, // Permitir null para que el trigger lo genere
     unique: true,
   },
   area: {
@@ -78,12 +78,7 @@ const OrdenTrabajo = sequelize.define('ordentrabajo', {
 }, {
   tableName: 'ordentrabajo',
   timestamps: false,
-  defaultScope: {
-    attributes: { exclude: ['numero_orden'] }, // Excluir numero_orden por defecto
-  },
-  scopes: {
-    withNumeroOrden: { attributes: {} }, // Scope para incluir todos los atributos, incluido numero_orden
-  }
+  
 });
 OrdenTrabajo.hasMany(ImagenOrden, {
     foreignKey: 'id_orden',
