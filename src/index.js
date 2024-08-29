@@ -13,6 +13,7 @@ import productRoutes from './routes/productRoutes.js';
 import productCategoryRoutes from './routes/productCategoryRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
 import serviceCategoryRoutes from './routes/serviceCategoryRoutes.js';
+import ordenTrabajoRoutes from './routes/ordenTrabajoRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import 'dotenv/config';
@@ -43,6 +44,7 @@ app.use('/api', productRoutes);
 app.use('/api', productCategoryRoutes);
 app.use('/api', serviceRoutes);
 app.use('/api', serviceCategoryRoutes);
+app.use('/api', ordenTrabajoRoutes);
 
 
 // Sincronizar con la base de datos
