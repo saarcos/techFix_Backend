@@ -1,7 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
-
-const Marca = sequelize.define('Marca', {
+const Marca = sequelize.define('marca', {
   id_marca: {
     type: DataTypes.INTEGER,
     autoIncrement: true,

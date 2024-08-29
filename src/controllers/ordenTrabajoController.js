@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import OrdenTrabajo from '../models/ordenTrabajo.js';
 import ImagenOrden from '../models/imagenOrden.js';
+import Equipo from '../models/equipoModel.js';
+import Usuario from '../models/userModel.js';
+import Cliente from '../models/clientModel.js';
+import Marca from '../models/brandModel.js'
+import Modelo from '../models/modelModel.js'
 import sequelize from '../config/sequelize.js';
 
 export const ordenTrabajoSchema = z.object({
@@ -20,21 +25,50 @@ export const ordenTrabajoSchema = z.object({
     imagenes: z.array(z.string().url()).optional(), 
 });
 export const getOrdenesTrabajo = async (req, res) => {
-    try {
-      const ordenes = await OrdenTrabajo.scope('withNumeroOrden').findAll({
-        include: {
+  try {
+    const ordenes = await OrdenTrabajo.scope('withNumeroOrden').findAll({
+      include: [
+        {
           model: ImagenOrden,
           as: 'imagenes',
-          attributes: ['url_imagen']
+          attributes: ['url_imagen'],
+        },
+        {
+          model: Equipo,
+          as: 'equipo',
+          attributes: ['nserie'],
+          include: [
+            {
+              model: Marca,
+              as: 'marca',
+              attributes: ['nombre'], // Trae el nombre de la marca
+            },
+            {
+              model: Modelo,
+              as: 'modelo',
+              attributes: ['nombre'], // Trae el nombre del modelo
+            }
+          ],
+        },
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre', 'apellido', 'email'], // Ajusta estos atributos según tu estructura
+        },
+        {
+          model: Cliente,
+          as: 'cliente',
+          attributes: ['nombre', 'apellido', 'cedula','correo','celular'], // Ajusta estos atributos según tu estructura
         }
-      });
-  
-      res.status(200).json(ordenes);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+      ]
+    });
+
+    res.status(200).json(ordenes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
-  export const createOrdenTrabajo = async (req, res) => {
+export const createOrdenTrabajo = async (req, res) => {
     const result = ordenTrabajoSchema.safeParse(req.body);
   
     if (!result.success) {

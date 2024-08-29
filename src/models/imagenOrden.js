@@ -17,7 +17,7 @@ const ImagenOrden = sequelize.define('imagenorden', {
     allowNull: false,
   },
 }, {
-  tableName: 'IMAGENORDEN',
+  tableName: 'imagenorden',
   timestamps: false,
 });
 

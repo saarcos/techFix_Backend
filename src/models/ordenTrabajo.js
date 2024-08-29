@@ -2,6 +2,9 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import ImagenOrden from './imagenOrden.js';
+import Equipo from './equipoModel.js'
+import Usuario from './userModel.js'
+import Cliente from './clientModel.js'
 const OrdenTrabajo = sequelize.define('ordentrabajo', {
   id_orden: {
     type: DataTypes.INTEGER,
@@ -91,5 +94,8 @@ ImagenOrden.belongsTo(OrdenTrabajo, {
     foreignKey: 'id_orden',
     as: 'orden',
 });
+OrdenTrabajo.belongsTo(Equipo, { foreignKey: 'id_equipo', as: 'equipo' });
+OrdenTrabajo.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
+OrdenTrabajo.belongsTo(Cliente, { foreignKey: 'id_cliente', as: 'cliente' });
 
 export default OrdenTrabajo;
