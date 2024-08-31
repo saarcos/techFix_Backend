@@ -23,6 +23,8 @@ export const ordenTrabajoSchema = z.object({
     confirmacion: z.boolean().optional(),
     passwordequipo: z.string().nullable().optional(),
     imagenes: z.array(z.string().url()).optional(), 
+    total: z.number().optional(),
+    confirmacion: z.boolean().optional(),
 });
 export const getOrdenesTrabajo = async (req, res) => {
   try {
