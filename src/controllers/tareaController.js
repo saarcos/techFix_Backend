@@ -4,6 +4,8 @@ import ProductoTarea from '../models/productoTarea.js';
 import ServicioTarea from '../models/servicioTarea.js';
 import Producto from '../models/productModel.js';
 import Servicio from '../models/serviceModel.js';
+import sequelize from '../config/sequelize.js';
+
 export const getAllTareas = async (req, res) => {
   try {
     const tareas = await Tarea.findAll({
@@ -31,17 +33,22 @@ export const getAllTareas = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener las tareas', error });
   }
 };
+
 export const createTarea = async (req, res) => {
+  const { titulo, tiempo, descripcion } = req.body;
+
   try {
-    const { titulo, tiempo, descripcion } = req.body;
+    // Crear solo la tarea
     const nuevaTarea = await Tarea.create({
       titulo,
       tiempo,
       descripcion,
     });
+
+    // Devolver la tarea creada con su ID
     res.status(201).json(nuevaTarea);
   } catch (error) {
-    res.status(500).json({ message: 'Error al crear la tarea', error });
+    res.status(500).json({ message: 'Error al crear la tarea', error: error.message });
   }
 };
 
@@ -59,17 +66,72 @@ export const getTareaById = async (req, res) => {
 };
 
 export const updateTarea = async (req, res) => {
+  const { id } = req.params;
+  const { titulo, tiempo, descripcion, productos, servicios } = req.body;
+
   try {
-    const { id } = req.params;
-    const { titulo, tiempo, descripcion } = req.body;
     const tarea = await Tarea.findByPk(id);
     if (!tarea) {
       return res.status(404).json({ message: 'Tarea no encontrada' });
     }
+
+    // Actualizar los campos de la tarea
     tarea.titulo = titulo;
     tarea.tiempo = tiempo;
     tarea.descripcion = descripcion;
     await tarea.save();
+
+    // Actualizar los productos
+    if (productos && productos.length > 0) {
+      // Eliminar las relaciones actuales de productos
+      await ProductoTarea.destroy({ where: { id_tarea: id } });
+
+      for (const prod of productos) {
+        const { id_producto, cantidad } = prod;
+
+        const producto = await Producto.findByPk(id_producto);
+        if (!producto) {
+          return res.status(404).json({ message: `Producto con ID ${id_producto} no encontrado` });
+        }
+
+        if (producto.stock < cantidad) {
+          return res.status(400).json({ message: `Stock insuficiente para el producto ${producto.nombreProducto}` });
+        }
+
+        // Reducir el stock
+        producto.stock -= cantidad;
+        await producto.save();
+
+        // Crear la nueva relación producto-tarea
+        await ProductoTarea.create({
+          id_tarea: tarea.id,
+          id_producto,
+          cantidad,
+        });
+      }
+    }
+
+    // Actualizar los servicios
+    if (servicios && servicios.length > 0) {
+      // Eliminar las relaciones actuales de servicios
+      await ServicioTarea.destroy({ where: { id_tarea: id } });
+
+      for (const serv of servicios) {
+        const { id_servicio } = serv;
+
+        const servicio = await Servicio.findByPk(id_servicio);
+        if (!servicio) {
+          return res.status(404).json({ message: `Servicio con ID ${id_servicio} no encontrado` });
+        }
+
+        // Crear la nueva relación servicio-tarea
+        await ServicioTarea.create({
+          id_tarea: tarea.id,
+          id_servicio,
+        });
+      }
+    }
+
     res.json(tarea);
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar la tarea', error });
@@ -91,50 +153,58 @@ export const deleteTarea = async (req, res) => {
 };
 
 //Relaciones con producto y tarea
-
 export const addProductoToTarea = async (req, res) => {
+  const { id_tarea, productos } = req.body;
+
+  const transaction = await sequelize.transaction();
   try {
-    const { id_tarea, id_producto, cantidad } = req.body;
+    for (const { id_producto, cantidad } of productos) {
+      const producto = await Producto.findByPk(id_producto, { transaction });
 
-    // Buscar el producto en la base de datos
-    const producto = await Producto.findByPk(id_producto);
+      if (!producto) {
+        await transaction.rollback();
+        return res.status(404).json({ message: 'Producto no encontrado' });
+      }
+      await producto.save({ transaction });
 
-    // Verificar si el producto existe
-    if (!producto) {
-      return res.status(404).json({ message: 'Producto no encontrado' });
+      await ProductoTarea.create({
+        id_tarea,
+        id_producto,
+        cantidad,
+      }, { transaction });
     }
 
-    // Verificar si hay suficiente stock disponible
-    if (producto.stock < cantidad) {
-      return res.status(400).json({ message: 'Stock insuficiente' });
-    }
-
-    // Reducir el stock del producto
-    producto.stock -= cantidad;
-    await producto.save();
-
-    // Crear la relación entre la tarea y el producto
-    const nuevaRelacion = await ProductoTarea.create({
-      id_tarea,
-      id_producto,
-      cantidad,
-    });
-
-    res.status(201).json(nuevaRelacion);
+    await transaction.commit();
+    res.status(201).json({ message: 'Productos añadidos a la tarea' });
   } catch (error) {
-    res.status(500).json({ message: 'Error al añadir el producto a la tarea', error });
+    await transaction.rollback();
+    res.status(500).json({ message: 'Error al añadir productos', error });
   }
 };
 export const addServicioToTarea = async (req, res) => {
+  const { id_tarea, servicios } = req.body;
+
+  const transaction = await sequelize.transaction();
   try {
-    const { id_tarea, id_servicio } = req.body;
-    const nuevaRelacion = await ServicioTarea.create({
-      id_tarea,
-      id_servicio,
-    });
-    res.status(201).json(nuevaRelacion);
+    for (const { id_servicio } of servicios) {
+      const servicio = await Servicio.findByPk(id_servicio, { transaction });
+
+      if (!servicio) {
+        await transaction.rollback();
+        return res.status(404).json({ message: 'Servicio no encontrado' });
+      }
+
+      await ServicioTarea.create({
+        id_tarea,
+        id_servicio,
+      }, { transaction });
+    }
+
+    await transaction.commit();
+    res.status(201).json({ message: 'Servicios añadidos a la tarea' });
   } catch (error) {
-    res.status(500).json({ message: 'Error al añadir el servicio a la tarea', error });
+    await transaction.rollback();
+    res.status(500).json({ message: 'Error al añadir servicios', error });
   }
 };
 export const updateProductoInTarea = async (req, res) => {
