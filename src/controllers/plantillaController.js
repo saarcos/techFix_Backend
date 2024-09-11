@@ -47,56 +47,81 @@ export const getAllPlantillas = async (req, res) => {
       res.status(500).json({ message: 'Error al obtener las plantillas', error });
     }
 };
-export const removeTareaFromPlantilla = async (req, res) => {
-    try {
-      const { id_taskgroup } = req.params;
-  
-      const relacion = await GrupoTareas.findByPk(id_taskgroup);
-      if (!relacion) {
-        return res.status(404).json({ message: 'Relación no encontrada' });
-      }
-  
-      await relacion.destroy();
-      res.json({ message: 'Tarea eliminada de la plantilla' });
-    } catch (error) {
-      res.status(500).json({ message: 'Error al eliminar la tarea de la plantilla', error });
+export const getPlantillaById = async (req, res) => {
+  try {
+    const { id_grupo } = req.params;
+
+    // Busca la plantilla por su ID e incluye las tareas relacionadas
+    const plantilla = await Plantilla.findByPk(id_grupo, {
+      include: [
+        {
+          model: GrupoTareas,
+          as: 'tareas',
+          include: {
+            model: Tarea,
+            as: 'tarea',
+          },
+        },
+      ],
+    });
+
+    if (!plantilla) {
+      return res.status(404).json({ message: 'Plantilla no encontrada' });
     }
+
+    res.json(plantilla);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener la plantilla', error });
+  }
 };
+
 export const updatePlantilla = async (req, res) => {
-    try {
-      const { id_grupo } = req.params;
-      const { descripcion, tareas } = req.body;
-  
-      const plantilla = await Plantilla.findByPk(id_grupo);
-      if (!plantilla) {
-        return res.status(404).json({ message: 'Plantilla no encontrada' });
-      }
-  
-      // Actualizar la descripción de la plantilla
-      if (descripcion) {
-        plantilla.descripcion = descripcion;
-      }
-  
-      await plantilla.save();
-  
-      // Si se proporcionan nuevas tareas, actualizar las relaciones
-      if (tareas && tareas.length > 0) {
-        // Eliminar las relaciones existentes
-        await GrupoTareas.destroy({ where: { id_grupo } });
-  
-        // Crear las nuevas relaciones
-        const nuevasRelaciones = tareas.map(id_tarea => ({
-          id_tarea,
-          id_grupo: id_grupo,
-        }));
-        await GrupoTareas.bulkCreate(nuevasRelaciones);
-      }
-  
-      res.json({ message: 'Plantilla actualizada exitosamente' });
-    } catch (error) {
-      res.status(500).json({ message: 'Error al actualizar la plantilla', error });
+  try {
+    const { id_grupo } = req.params;
+    const { descripcion, tareas } = req.body;
+
+    const plantilla = await Plantilla.findByPk(id_grupo);
+    if (!plantilla) {
+      return res.status(404).json({ message: 'Plantilla no encontrada' });
     }
+
+    // Actualizar la descripción de la plantilla
+    if (descripcion) {
+      plantilla.descripcion = descripcion;
+    }
+
+    await plantilla.save();
+
+    // Eliminar siempre las relaciones existentes de tareas, incluso si tareas está vacío
+    await GrupoTareas.destroy({ where: { id_grupo } });
+
+    // Si se proporcionan nuevas tareas, crear las nuevas relaciones
+    if (tareas && tareas.length > 0) {
+      const nuevasRelaciones = tareas.map(id_tarea => ({
+        id_tarea,
+        id_grupo: id_grupo,
+      }));
+      await GrupoTareas.bulkCreate(nuevasRelaciones);
+    }
+
+    res.json({ message: 'Plantilla actualizada exitosamente' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar la plantilla', error });
+  }
 };
+export const deletePlantilla = async (req, res) => {
+  try {
+    const {id_grupo} = req.params;
+    const plantilla = await Plantilla.findByPk(id_grupo);
+    if (!plantilla){
+      return res.status(404).json({ message: 'Plantilla no encontrada' });
+    }
+    await plantilla.destroy();
+    res.json({ message: 'Plantilla eliminada' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar la plantilla', error });
+  }
+}
 export const asignarPlantillaAOrden = async (req, res) => {
     try {
       const { id_grupo, id_orden, id_usuario } = req.body;

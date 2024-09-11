@@ -33,6 +33,39 @@ export const getAllTareas = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener las tareas', error });
   }
 };
+export const getTareaById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tarea = await Tarea.findByPk(id, {
+      include: [
+        {
+          model: ProductoTarea,
+          as: 'productos',
+          include: {
+            model: Producto,
+            as: 'producto'
+          }
+        },
+        {
+          model: ServicioTarea,
+          as: 'servicios',
+          include: {
+            model: Servicio,
+            as: 'servicio'
+          }
+        }
+      ]
+    });
+
+    if (!tarea) {
+      return res.status(404).json({ message: 'Tarea no encontrada' });
+    }
+
+    res.json(tarea);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener la tarea', error });
+  }
+};
 
 export const createTarea = async (req, res) => {
   const { titulo, tiempo, descripcion } = req.body;
@@ -52,40 +85,29 @@ export const createTarea = async (req, res) => {
   }
 };
 
-export const getTareaById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const tarea = await Tarea.findByPk(id);
-    if (!tarea) {
-      return res.status(404).json({ message: 'Tarea no encontrada' });
-    }
-    res.json(tarea);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener la tarea', error });
-  }
-};
+
 
 export const updateTarea = async (req, res) => {
   const { id } = req.params;
   const { titulo, tiempo, descripcion, productos, servicios } = req.body;
-
+  
   try {
     const tarea = await Tarea.findByPk(id);
     if (!tarea) {
       return res.status(404).json({ message: 'Tarea no encontrada' });
     }
-
+    
     // Actualizar los campos de la tarea
     tarea.titulo = titulo;
     tarea.tiempo = tiempo;
     tarea.descripcion = descripcion;
     await tarea.save();
 
-    // Actualizar los productos
-    if (productos && productos.length > 0) {
-      // Eliminar las relaciones actuales de productos
-      await ProductoTarea.destroy({ where: { id_tarea: id } });
+    // Actualizar los productos (incluso si el array está vacío)
+    // Eliminar todas las relaciones de productos
+    await ProductoTarea.destroy({ where: { id_tarea: id } });
 
+    if (productos && productos.length > 0) {
       for (const prod of productos) {
         const { id_producto, cantidad } = prod;
 
@@ -94,28 +116,20 @@ export const updateTarea = async (req, res) => {
           return res.status(404).json({ message: `Producto con ID ${id_producto} no encontrado` });
         }
 
-        if (producto.stock < cantidad) {
-          return res.status(400).json({ message: `Stock insuficiente para el producto ${producto.nombreProducto}` });
-        }
-
-        // Reducir el stock
-        producto.stock -= cantidad;
-        await producto.save();
-
         // Crear la nueva relación producto-tarea
         await ProductoTarea.create({
-          id_tarea: tarea.id,
+          id_tarea: tarea.id_tarea,
           id_producto,
           cantidad,
         });
       }
     }
 
-    // Actualizar los servicios
-    if (servicios && servicios.length > 0) {
-      // Eliminar las relaciones actuales de servicios
-      await ServicioTarea.destroy({ where: { id_tarea: id } });
+    // Actualizar los servicios (incluso si el array está vacío)
+    // Eliminar todas las relaciones de servicios
+    await ServicioTarea.destroy({ where: { id_tarea: id } });
 
+    if (servicios && servicios.length > 0) {
       for (const serv of servicios) {
         const { id_servicio } = serv;
 
@@ -126,7 +140,7 @@ export const updateTarea = async (req, res) => {
 
         // Crear la nueva relación servicio-tarea
         await ServicioTarea.create({
-          id_tarea: tarea.id,
+          id_tarea: tarea.id_tarea,
           id_servicio,
         });
       }
@@ -137,6 +151,7 @@ export const updateTarea = async (req, res) => {
     res.status(500).json({ message: 'Error al actualizar la tarea', error });
   }
 };
+
 
 export const deleteTarea = async (req, res) => {
   try {
