@@ -4,7 +4,8 @@ import {
     createOrdenTrabajo,
     getOrdenesTrabajo,
     updateOrdenTrabajo,
-    deleteOrdenTrabajo
+    deleteOrdenTrabajo,
+    getOrdenTrabajoById
 } from '../controllers/ordenTrabajoController.js';
 
 const router = express.Router();
@@ -13,6 +14,7 @@ const router = express.Router();
 router.post('/ordenes', createOrdenTrabajo);
 // Ruta para obtener todas las órdenes de trabajo
 router.get('/ordenes', getOrdenesTrabajo);
+router.get('/ordenes/:id_orden', getOrdenTrabajoById);
 // Ruta para actualizar una orden de trabajo por ID
 router.put('/ordenes/:id_orden', updateOrdenTrabajo);
 // Ruta para eliminar una orden de trabajo por ID

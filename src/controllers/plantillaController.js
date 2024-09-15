@@ -134,7 +134,6 @@ export const asignarPlantillaAOrden = async (req, res) => {
           as: 'tarea',
         },
       });
-      console.log(tareasPlantilla.length)
   
       if (!tareasPlantilla || tareasPlantilla.length === 0) {
         return res.status(404).json({ message: 'No se encontraron tareas para la plantilla seleccionada' });

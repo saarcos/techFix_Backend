@@ -70,6 +70,59 @@ export const getOrdenesTrabajo = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+export const getOrdenTrabajoById = async (req, res) => {
+  const { id_orden } = req.params;
+  console.log(id_orden)
+  try {
+    // Buscar la orden de trabajo por su ID
+    const orden = await OrdenTrabajo.findByPk(id_orden, {
+      include: [
+        {
+          model: ImagenOrden,
+          as: 'imagenes',
+          attributes: ['url_imagen'],
+        },
+        {
+          model: Equipo,
+          as: 'equipo',
+          attributes: ['nserie'],
+          include: [
+            {
+              model: Marca,
+              as: 'marca',
+              attributes: ['nombre'], // Trae el nombre de la marca
+            },
+            {
+              model: Modelo,
+              as: 'modelo',
+              attributes: ['nombre'], // Trae el nombre del modelo
+            }
+          ],
+        },
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre', 'apellido', 'email'], // Ajusta estos atributos según tu estructura
+        },
+        {
+          model: Cliente,
+          as: 'cliente',
+          attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta estos atributos según tu estructura
+        }
+      ]
+    });
+
+    // Si no se encuentra la orden
+    if (!orden) {
+      return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
+    }
+
+    // Enviar la respuesta con la orden encontrada
+    res.status(200).json(orden);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 export const createOrdenTrabajo = async (req, res) => {
   const result = ordenTrabajoSchema.safeParse(req.body);
 
