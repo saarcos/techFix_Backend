@@ -2,7 +2,6 @@
 import Plantilla from '../models/plantillaModel.js';
 import GrupoTareas from '../models/grupoTareasModel.js';
 import Tarea from '../models/tareaModel.js';
-import TareasOrden from '../models/tareasOrdenModel.js';
 
 export const createPlantilla = async (req, res) => {
   try {
@@ -122,34 +121,3 @@ export const deletePlantilla = async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar la plantilla', error });
   }
 }
-export const asignarPlantillaAOrden = async (req, res) => {
-    try {
-      const { id_grupo, id_orden, id_usuario } = req.body;
-  
-      // Obtener todas las tareas asociadas a la plantilla
-      const tareasPlantilla = await GrupoTareas.findAll({
-        where: { id_grupo },
-        include: {
-          model: Tarea,
-          as: 'tarea',
-        },
-      });
-  
-      if (!tareasPlantilla || tareasPlantilla.length === 0) {
-        return res.status(404).json({ message: 'No se encontraron tareas para la plantilla seleccionada' });
-      }
-  
-      // Asignar cada tarea a la orden de trabajo
-      const tareasOrden = tareasPlantilla.map(tarea => ({
-        id_tarea: tarea.id_tarea,
-        id_orden: id_orden,
-        id_usuario: id_usuario, // El técnico encargado
-        status: false, // Iniciar con el estado no completado
-      }));
-  
-      await TareasOrden.bulkCreate(tareasOrden);
-      res.status(201).json({ message: 'Plantilla asignada a la orden exitosamente' });
-    } catch (error) {
-      res.status(500).json({ message: 'Error al asignar la plantilla a la orden', error });
-    }
-  };

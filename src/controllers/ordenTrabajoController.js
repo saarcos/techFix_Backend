@@ -7,6 +7,12 @@ import Cliente from '../models/clientModel.js';
 import Marca from '../models/brandModel.js'
 import Modelo from '../models/modelModel.js'
 import sequelize from '../config/sequelize.js';
+import ProductoOrden from '../models/productOrdenModel.js';
+import Producto from '../models/productModel.js';
+import ServicioOrden from '../models/servicioOrdenModel.js';
+import Servicio from '../models/serviceModel.js';
+import TareaOrden from '../models/tareaOrdenModel.js';
+import Tarea from '../models/tareaModel.js';
 
 export const ordenTrabajoSchema = z.object({
     id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
@@ -108,6 +114,44 @@ export const getOrdenTrabajoById = async (req, res) => {
           model: Cliente,
           as: 'cliente',
           attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta estos atributos según tu estructura
+        },
+        {
+          model: ProductoOrden,
+          as: 'productos',
+          include: [
+            {
+              model: Producto,
+              as: 'producto',
+              attributes: ['nombreProducto', 'precioFinal', 'iva', 'precioSinIVA'], // Incluye el nombre y el precio del producto
+            }
+          ]
+        },
+        {
+          model: ServicioOrden,
+          as: 'servicios',
+          include: [
+            {
+              model: Servicio,
+              as: 'servicio',
+              attributes: ['nombre', 'precio'], // Incluye el nombre y el precio del servicio
+            }
+          ]
+        },
+        {
+          model: TareaOrden,
+          as: 'tareas',
+          include: [
+            {
+              model: Tarea,
+              as: 'tarea',
+              attributes: ['titulo', 'descripcion', 'tiempo'] // Incluye la información de la tarea
+            },
+            {
+              model: Usuario,
+              as: 'usuario',
+              attributes: ['nombre', 'apellido'], // Incluye el nombre del usuario asignado, si aplica
+            }
+          ]
         }
       ]
     });

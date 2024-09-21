@@ -16,8 +16,11 @@ import serviceCategoryRoutes from './routes/serviceCategoryRoutes.js';
 import ordenTrabajoRoutes from './routes/ordenTrabajoRoutes.js';
 import tareaRoutes from './routes/tareaRoutes.js';
 import plantillaRoutes from './routes/plantillaRoutes.js';
-import tareasOrdenRoutes from './routes/tareasOrdenRoutes.js';
 import accesorioRoutes from './routes/accesorioRoutes.js';
+import plantillaOrdenRoutes from './routes/plantillaOrdenRoutes.js';
+import productoOrdenRoutes from './routes/productoOrdenRoutes.js';
+import servicioOrdenRoutes from './routes/servicioOrdenRoutes.js';
+import tareaOrdenRoutes from './routes/tareaOrdenRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import 'dotenv/config';
@@ -51,8 +54,11 @@ app.use('/api', serviceCategoryRoutes);
 app.use('/api', ordenTrabajoRoutes);
 app.use('/api', tareaRoutes);
 app.use('/api', plantillaRoutes);
-app.use('/api', tareasOrdenRoutes);
 app.use('/api', accesorioRoutes);
+app.use('/api', plantillaOrdenRoutes);
+app.use('/api', productoOrdenRoutes);
+app.use('/api', servicioOrdenRoutes);
+app.use('/api', tareaOrdenRoutes);
 
 
 // Sincronizar con la base de datos

@@ -1,11 +1,10 @@
-// models/tareasOrdenModel.js
+// models/TareaOrden.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import Tarea from './tareaModel.js';
-import Orden from './ordenTrabajo.js';
 import Usuario from './userModel.js';
 
-const TareasOrden = sequelize.define('tareasOrden', {
+const TareaOrden = sequelize.define('tareaOrden', {
   id_taskord: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -17,6 +16,10 @@ const TareasOrden = sequelize.define('tareasOrden', {
     type: DataTypes.INTEGER,
     allowNull: false,
     field: 'id_tarea',
+    references: {
+      model: Tarea,
+      key: 'id_tarea'
+    }
   },
   id_orden: {
     type: DataTypes.INTEGER,
@@ -25,8 +28,12 @@ const TareasOrden = sequelize.define('tareasOrden', {
   },
   id_usuario: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true, // Ahora es opcional
     field: 'id_usuario',
+    references: {
+      model: Usuario,
+      key: 'id_usuario'
+    }
   },
   status: {
     type: DataTypes.BOOLEAN,
@@ -35,13 +42,11 @@ const TareasOrden = sequelize.define('tareasOrden', {
     field: 'status',
   }
 }, {
-  tableName: 'tareasorden',
+  tableName: 'tareaorden',
   timestamps: false,
 });
 
-// Relaciones
-TareasOrden.belongsTo(Tarea, { foreignKey: 'id_tarea', as: 'tarea' });
-TareasOrden.belongsTo(Orden, { foreignKey: 'id_orden', as: 'orden' });
-TareasOrden.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
+TareaOrden.belongsTo(Tarea, { foreignKey: 'id_tarea', as: 'tarea' });
+TareaOrden.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
 
-export default TareasOrden;
+export default TareaOrden;

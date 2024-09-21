@@ -5,6 +5,9 @@ import ImagenOrden from './imagenOrden.js';
 import Equipo from './equipoModel.js'
 import Usuario from './userModel.js'
 import Cliente from './clientModel.js'
+import ProductoOrden from './productOrdenModel.js';
+import ServicioOrden from './servicioOrdenModel.js';
+import TareaOrden from './tareaOrdenModel.js';
 const OrdenTrabajo = sequelize.define('ordentrabajo', {
   id_orden: {
     type: DataTypes.INTEGER,
@@ -92,5 +95,9 @@ ImagenOrden.belongsTo(OrdenTrabajo, {
 OrdenTrabajo.belongsTo(Equipo, { foreignKey: 'id_equipo', as: 'equipo' });
 OrdenTrabajo.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
 OrdenTrabajo.belongsTo(Cliente, { foreignKey: 'id_cliente', as: 'cliente' });
+OrdenTrabajo.hasMany(ProductoOrden, {as: 'productos', foreignKey: 'id_orden'});
+OrdenTrabajo.hasMany(ServicioOrden, { foreignKey: 'id_orden', as: 'servicios' });
+OrdenTrabajo.hasMany(TareaOrden, { foreignKey: 'id_orden', as: 'tareas' });
+
 
 export default OrdenTrabajo;
