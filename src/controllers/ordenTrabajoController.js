@@ -257,6 +257,8 @@ export const updateOrdenTrabajo = async (req, res) => {
     } = result.data;
   
     const transaction = await sequelize.transaction();
+    await ProductoOrden.destroy({ where: { id_orden: id_orden }, transaction });
+    await ServicioOrden.destroy({ where: { id_orden: id_orden }, transaction });
   
     try {
       // Encontrar la orden de trabajo
