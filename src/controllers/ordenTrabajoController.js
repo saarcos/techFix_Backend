@@ -15,22 +15,22 @@ import TareaOrden from '../models/tareaOrdenModel.js';
 import Tarea from '../models/tareaModel.js';
 
 export const ordenTrabajoSchema = z.object({
-    id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
-    id_usuario: z.number().int().nullable().optional(), 
-    id_cliente: z.number().int().min(1, 'El ID del cliente es obligatorio'),
-    area: z.string().min(1, 'El área es obligatoria').max(50, 'El área no debe exceder 50 caracteres'),
-    prioridad: z.string().min(1, 'La prioridad es obligatoria').max(50, 'La prioridad no debe exceder 50 caracteres'),
-    descripcion: z.string().min(1, 'La descripción es obligatoria'),
-    estado: z.string().min(1, 'El estado es obligatorio').max(50, 'El estado no debe exceder 50 caracteres'),
-    fecha_prometida: z.string().transform((str) => new Date(str)).nullable().optional(),
-    presupuesto: z.number().nullable().optional(),
-    adelanto: z.number().nullable().optional(),
-    total: z.number().nullable().optional(),
-    confirmacion: z.boolean().optional(),
-    passwordequipo: z.string().nullable().optional(),
-    imagenes: z.array(z.string().url()).optional(), 
-    total: z.number().optional(),
-    confirmacion: z.boolean().optional(),
+  id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
+  id_usuario: z.number().int().nullable().optional(),
+  id_cliente: z.number().int().min(1, 'El ID del cliente es obligatorio'),
+  area: z.string().min(1, 'El área es obligatoria').max(50, 'El área no debe exceder 50 caracteres'),
+  prioridad: z.string().min(1, 'La prioridad es obligatoria').max(50, 'La prioridad no debe exceder 50 caracteres'),
+  descripcion: z.string().min(1, 'La descripción es obligatoria'),
+  estado: z.string().min(1, 'El estado es obligatorio').max(50, 'El estado no debe exceder 50 caracteres'),
+  fecha_prometida: z.string().transform((str) => new Date(str)).nullable().optional(),
+  presupuesto: z.number().nullable().optional(),
+  adelanto: z.number().nullable().optional(),
+  total: z.number().nullable().optional(),
+  confirmacion: z.boolean().optional(),
+  passwordequipo: z.string().nullable().optional(),
+  imagenes: z.array(z.string().url()).optional(),
+  total: z.number().optional(),
+  confirmacion: z.boolean().optional(),
 });
 export const getOrdenesTrabajo = async (req, res) => {
   try {
@@ -66,7 +66,7 @@ export const getOrdenesTrabajo = async (req, res) => {
         {
           model: Cliente,
           as: 'cliente',
-          attributes: ['nombre', 'apellido', 'cedula','correo','celular'], // Ajusta estos atributos según tu estructura
+          attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta estos atributos según tu estructura
         }
       ]
     });
@@ -232,14 +232,44 @@ export const createOrdenTrabajo = async (req, res) => {
   }
 };
 export const updateOrdenTrabajo = async (req, res) => {
-    const { id_orden } = req.params;
-    const result = ordenTrabajoSchema.safeParse(req.body);
-  
-    if (!result.success) {
-      return res.status(400).json({ errors: result.error.errors });
+  const { id_orden } = req.params;
+  const result = ordenTrabajoSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({ errors: result.error.errors });
+  }
+
+  const {
+    id_equipo,
+    id_usuario,
+    id_cliente,
+    area,
+    prioridad,
+    descripcion,
+    estado,
+    fecha_prometida,
+    presupuesto,
+    adelanto,
+    total,
+    confirmacion,
+    passwordequipo,
+    imagenes,
+  } = result.data;
+
+  const transaction = await sequelize.transaction();
+  await ProductoOrden.destroy({ where: { id_orden: id_orden }, transaction });
+  await ServicioOrden.destroy({ where: { id_orden: id_orden }, transaction });
+
+  try {
+    // Encontrar la orden de trabajo
+    const ordenExistente = await OrdenTrabajo.findByPk(id_orden, { transaction });
+
+    if (!ordenExistente) {
+      return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
     }
-  
-    const {
+
+    // Actualizar la orden de trabajo
+    await ordenExistente.update({
       id_equipo,
       id_usuario,
       id_cliente,
@@ -253,87 +283,74 @@ export const updateOrdenTrabajo = async (req, res) => {
       total,
       confirmacion,
       passwordequipo,
-      imagenes,
-    } = result.data;
-  
-    const transaction = await sequelize.transaction();
-    await ProductoOrden.destroy({ where: { id_orden: id_orden }, transaction });
-    await ServicioOrden.destroy({ where: { id_orden: id_orden }, transaction });
-  
-    try {
-      // Encontrar la orden de trabajo
-      const ordenExistente = await OrdenTrabajo.findByPk(id_orden, { transaction });
-  
-      if (!ordenExistente) {
-        return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
-      }
-  
-      // Actualizar la orden de trabajo
-      await ordenExistente.update({
-        id_equipo,
-        id_usuario,
-        id_cliente,
-        area,
-        prioridad,
-        descripcion,
-        estado,
-        fecha_prometida,
-        presupuesto,
-        adelanto,
-        total,
-        confirmacion,
-        passwordequipo,
-      }, { transaction });
-  
-      // Actualizar las imágenes asociadas (opcional)
-      if (imagenes && imagenes.length > 0) {
-        // Eliminar las imágenes existentes
+    }, { transaction });
+
+    if (imagenes) {
+      if (imagenes.length > 0) {
+        // Obtener las imágenes actuales en la base de datos
+        const existingImages = await ImagenOrden.findAll({ where: { id_orden }, transaction });
+
+        // Filtrar las imágenes que se deben eliminar (no están en el array enviado)
+        const imagesToDelete = existingImages.filter(img => !imagenes.includes(img.url_imagen));
+
+        // Eliminar las imágenes que ya no están
+        if (imagesToDelete.length > 0) {
+          const urlsToDelete = imagesToDelete.map(img => img.url_imagen);
+          await ImagenOrden.destroy({ where: { id_orden, url_imagen: urlsToDelete }, transaction });
+        }
+
+        // Filtrar las imágenes nuevas (URLs que no están en la base de datos)
+        const newImages = imagenes.filter(url => !existingImages.some(img => img.url_imagen === url));
+
+        // Insertar nuevas imágenes
+        if (newImages.length > 0) {
+          const imagenesData = newImages.map(url => ({
+            id_orden: id_orden,
+            url_imagen: url,
+          }));
+          await ImagenOrden.bulkCreate(imagenesData, { transaction });
+        }
+      } else {
+        // Si el array de imágenes está vacío, eliminar todas las imágenes asociadas a la orden
         await ImagenOrden.destroy({ where: { id_orden }, transaction });
-  
-        // Crear las nuevas imágenes
-        const imagenesData = imagenes.map(url => ({
-          id_orden: id_orden,
-          url_imagen: url,
-        }));
-  
-        await ImagenOrden.bulkCreate(imagenesData, { transaction });
       }
-  
-      // Confirmar la transacción
-      await transaction.commit();
-  
-      res.status(200).json({ message: 'Orden de trabajo actualizada exitosamente', orden: ordenExistente });
-    } catch (error) {
-      await transaction.rollback();
-      res.status(500).json({ error: error.message });
     }
+
+
+    // Confirmar la transacción
+    await transaction.commit();
+
+    res.status(200).json({ message: 'Orden de trabajo actualizada exitosamente', orden: ordenExistente });
+  } catch (error) {
+    await transaction.rollback();
+    res.status(500).json({ error: error.message });
+  }
 };
 export const deleteOrdenTrabajo = async (req, res) => {
-    const { id_orden } = req.params;
-  
-    const transaction = await sequelize.transaction();
-  
-    try {
-      // Encontrar la orden de trabajo
-      const ordenExistente = await OrdenTrabajo.findByPk(id_orden, { transaction });
-  
-      if (!ordenExistente) {
-        return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
-      }
-  
-      // Eliminar las imágenes asociadas
-      await ImagenOrden.destroy({ where: { id_orden }, transaction });
-  
-      // Eliminar la orden de trabajo
-      await OrdenTrabajo.destroy({ where: { id_orden }, transaction });
-  
-      // Confirmar la transacción
-      await transaction.commit();
-  
-      res.status(200).json({ message: 'Orden de trabajo eliminada exitosamente' });
-    } catch (error) {
-      await transaction.rollback();
-      res.status(500).json({ error: error.message });
+  const { id_orden } = req.params;
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Encontrar la orden de trabajo
+    const ordenExistente = await OrdenTrabajo.findByPk(id_orden, { transaction });
+
+    if (!ordenExistente) {
+      return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
     }
+
+    // Eliminar las imágenes asociadas
+    await ImagenOrden.destroy({ where: { id_orden }, transaction });
+
+    // Eliminar la orden de trabajo
+    await OrdenTrabajo.destroy({ where: { id_orden }, transaction });
+
+    // Confirmar la transacción
+    await transaction.commit();
+
+    res.status(200).json({ message: 'Orden de trabajo eliminada exitosamente' });
+  } catch (error) {
+    await transaction.rollback();
+    res.status(500).json({ error: error.message });
+  }
 };
-  
