@@ -259,7 +259,7 @@ export const updateOrdenTrabajo = async (req, res) => {
   const transaction = await sequelize.transaction();
   await ProductoOrden.destroy({ where: { id_orden: id_orden }, transaction });
   await ServicioOrden.destroy({ where: { id_orden: id_orden }, transaction });
-
+  await TareaOrden.destroy({where:{id_orden: id_orden}, transaction});
   try {
     // Encontrar la orden de trabajo
     const ordenExistente = await OrdenTrabajo.findByPk(id_orden, { transaction });

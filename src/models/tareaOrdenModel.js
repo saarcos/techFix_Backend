@@ -4,7 +4,7 @@ import sequelize from '../config/sequelize.js';
 import Tarea from './tareaModel.js';
 import Usuario from './userModel.js';
 
-const TareaOrden = sequelize.define('tareaOrden', {
+const TareaOrden = sequelize.define('tareasorden', {
   id_taskord: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -42,7 +42,7 @@ const TareaOrden = sequelize.define('tareaOrden', {
     field: 'status',
   }
 }, {
-  tableName: 'tareaorden',
+  tableName: 'tareasorden',
   timestamps: false,
 });
 

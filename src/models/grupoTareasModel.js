@@ -2,7 +2,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import Tarea from './tareaModel.js';
-import Plantilla from './plantillaModel.js';
 
 const GrupoTareas = sequelize.define('grupoTareas', {
   id_taskgroup: {

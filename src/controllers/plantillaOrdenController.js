@@ -1,9 +1,11 @@
 // controllers/plantillaOrdenController.js
+import GrupoTareas from '../models/grupoTareasModel.js';
 import PlantillaOrden from '../models/plantillaOrdenModel.js';
-
-
-
-// controllers/plantillaOrdenController.js
+import ProductoTarea from '../models/productoTarea.js';
+import ServicioTarea from '../models/servicioTarea.js';
+import TareaOrden from '../models/tareaOrdenModel.js';
+import ProductoOrden from '../models/productOrdenModel.js';
+import ServicioOrden from '../models/servicioOrdenModel.js'
 export const createMultiplePlantillasOrden = async (req, res) => {
   try {
     const { id_orden, plantillas } = req.body; // plantillas será un array de id_grupo
@@ -12,20 +14,74 @@ export const createMultiplePlantillasOrden = async (req, res) => {
       return res.status(400).json({ message: 'No se proporcionaron plantillas para asignar' });
     }
 
-    // Crear múltiples relaciones de una sola vez
+    // Crear múltiples relaciones para las plantillas
     const relaciones = plantillas.map(id_grupo => ({
       id_orden,
       id_grupo,
     }));
+    
+    // Usar bulkCreate para insertar todas las relaciones de plantillas a la vez
+    await PlantillaOrden.bulkCreate(relaciones);
 
-    // Usar bulkCreate para insertar todas las relaciones a la vez
-    const nuevasRelaciones = await PlantillaOrden.bulkCreate(relaciones);
+    // Conjuntos para almacenar productos y servicios ya agregados
+    const productosAgregados = new Set();
+    const serviciosAgregados = new Set();
 
-    res.status(201).json(nuevasRelaciones);
+    // Ahora buscar y crear las tareas correspondientes en TareaOrden
+    for (const id_grupo of plantillas) {
+      // Obtener las tareas asociadas al grupo (id_grupo) desde la tabla intermedia grupotareas
+      const grupoTareas = await GrupoTareas.findAll({ where: { id_grupo } });
+
+      // Iterar sobre las tareas del grupo
+      for (const grupoTarea of grupoTareas) {
+        // Verificar si ya existe una relación en TareaOrden con esta tarea y orden
+        const [tareaOrden] = await TareaOrden.findOrCreate({
+          where: {
+            id_tarea: grupoTarea.id_tarea,
+            id_orden
+          },
+          defaults: {
+            status: false, // Valor por defecto
+          }
+        });
+
+        // Obtener los productos asociados a la tarea
+        const productos = await ProductoTarea.findAll({ where: { id_tarea: grupoTarea.id_tarea } });
+        const servicios = await ServicioTarea.findAll({ where: { id_tarea: grupoTarea.id_tarea } });
+
+        // Crear relaciones de productos en TareaOrden
+        for (const producto of productos) {
+          if (!productosAgregados.has(producto.id_producto)) {
+            await ProductoOrden.create({
+              id_orden, id_orden,
+              id_producto: producto.id_producto,
+              id_tareaorden: tareaOrden.id, // Asegúrate de que la relación esté bien configurada
+              cantidad: producto.cantidad
+            });
+            productosAgregados.add(producto.id_producto); // Agregar al conjunto
+          }
+        }
+        // Crear relaciones de servicios en TareaOrden
+        for (const servicio of servicios) {
+          if (!serviciosAgregados.has(servicio.id_servicio)) {
+            await ServicioOrden.create({
+              id_orden: id_orden,
+              id_servicio: servicio.id_servicio,
+              id_tareaorden: tareaOrden.id // Asegúrate de que la relación esté bien configurada
+            });
+            serviciosAgregados.add(servicio.id_servicio); // Agregar al conjunto
+          }
+        }
+      }
+    }
+
+    res.status(201).json({ message: 'Plantillas, tareas, productos y servicios asignados correctamente' });
   } catch (error) {
-    res.status(500).json({ message: 'Error al asignar las plantillas a la orden', error });
-  }
+    console.error('Error:', error); // Agrega este log para ver el error en la consola
+    res.status(500).json({ message: 'Error al asignar las plantillas y tareas a la orden', error: error.message });
+  } 
 };
+
 
 export const getAllPlantillasOrden = async (req, res) => {
   try {
