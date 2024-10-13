@@ -13,6 +13,7 @@ import ServicioOrden from '../models/servicioOrdenModel.js';
 import Servicio from '../models/serviceModel.js';
 import TareaOrden from '../models/tareaOrdenModel.js';
 import Tarea from '../models/tareaModel.js';
+import AccesoriosDeOrden from '../models/accesorioOrdenModel.js';
 
 export const ordenTrabajoSchema = z.object({
   id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
@@ -260,6 +261,7 @@ export const updateOrdenTrabajo = async (req, res) => {
   await ProductoOrden.destroy({ where: { id_orden: id_orden }, transaction });
   await ServicioOrden.destroy({ where: { id_orden: id_orden }, transaction });
   await TareaOrden.destroy({where:{id_orden: id_orden}, transaction});
+  await AccesoriosDeOrden.destroy({ where: { id_orden }, transaction });
   try {
     // Encontrar la orden de trabajo
     const ordenExistente = await OrdenTrabajo.findByPk(id_orden, { transaction });

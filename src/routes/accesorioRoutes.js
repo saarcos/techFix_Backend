@@ -1,6 +1,6 @@
 import express from 'express';
 import { createAccesorio, getAccesorios, updateAccesorio, deleteAccesorio, getAccesorioById } from '../controllers/accesorioController.js';
-import { addAccesorioToOrden, getAccesoriosByOrden, deleteAccesorioFromOrden } from '../controllers/accesorioOrdenController.js';
+import { getAccesoriosByOrden, deleteAccesorioFromOrden, addAccesoriosToOrden, updateAccesoriosOrden } from '../controllers/accesorioOrdenController.js';
 
 const router = express.Router();
 
@@ -12,8 +12,9 @@ router.put('/accesorios/:id_accesorio', updateAccesorio);
 router.delete('/accesorios/:id_accesorio', deleteAccesorio);
 
 // Rutas para ACCESORIOSDEORDEN
-router.post('/accesorios-orden', addAccesorioToOrden);
+router.post('/accesorios-orden', addAccesoriosToOrden);
 router.get('/accesorios-orden/:id_orden', getAccesoriosByOrden);
+router.put('/accesorios-orden/:id_orden', updateAccesoriosOrden);
 router.delete('/accesorios-orden/:id_accesorioord', deleteAccesorioFromOrden);
 
 export default router;

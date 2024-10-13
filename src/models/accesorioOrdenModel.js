@@ -29,5 +29,10 @@ const AccesoriosDeOrden = sequelize.define('accesoriosdeorden', {
   tableName: 'accesoriosdeorden',
   timestamps: false,
 });
+// Definir la asociación entre AccesoriosDeOrden y Accesorio
+AccesoriosDeOrden.belongsTo(Accesorio, {
+  foreignKey: 'id_accesorio',
+  as: 'Accesorio'  // Nombre del alias para incluir los datos del accesorio
+});
 
 export default AccesoriosDeOrden;
