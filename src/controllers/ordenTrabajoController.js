@@ -18,7 +18,7 @@ import AccesoriosDeOrden from '../models/accesorioOrdenModel.js';
 export const ordenTrabajoSchema = z.object({
   id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
   id_usuario: z.number().int().nullable().optional(),
-  id_cliente: z.number().int().min(1, 'El ID del cliente es obligatorio'),
+  cliente_id: z.number().int().min(1, 'El ID del cliente es obligatorio'),
   area: z.string().min(1, 'El área es obligatoria').max(50, 'El área no debe exceder 50 caracteres'),
   prioridad: z.string().min(1, 'La prioridad es obligatoria').max(50, 'La prioridad no debe exceder 50 caracteres'),
   descripcion: z.string().min(1, 'La descripción es obligatoria'),
@@ -48,14 +48,21 @@ export const getOrdenesTrabajo = async (req, res) => {
           attributes: ['nserie'],
           include: [
             {
-              model: Marca,
-              as: 'marca',
-              attributes: ['nombre'], // Trae el nombre de la marca
+              model: Modelo,  // Incluimos Modelo
+              as: 'modelo',
+              attributes: ['nombre'],  // Atributos del modelo
+              include: [
+                {
+                  model: Marca,  // Incluimos Marca a través de Modelo
+                  as: 'marca',
+                  attributes: ['nombre'], // Atributos de la marca
+                }
+              ]
             },
             {
-              model: Modelo,
-              as: 'modelo',
-              attributes: ['nombre'], // Trae el nombre del modelo
+              model: Cliente,  // Incluimos Cliente a través del Equipo
+              as: 'cliente',
+              attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta los atributos según tu estructura
             }
           ],
         },
@@ -63,11 +70,6 @@ export const getOrdenesTrabajo = async (req, res) => {
           model: Usuario,
           as: 'usuario',
           attributes: ['nombre', 'apellido', 'email'], // Ajusta estos atributos según tu estructura
-        },
-        {
-          model: Cliente,
-          as: 'cliente',
-          attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta estos atributos según tu estructura
         }
       ]
     });
@@ -95,14 +97,21 @@ export const getOrdenTrabajoById = async (req, res) => {
           attributes: ['nserie'],
           include: [
             {
-              model: Marca,
-              as: 'marca',
-              attributes: ['nombre'], // Trae el nombre de la marca
+              model: Modelo,  // Incluimos Modelo
+              as: 'modelo',
+              attributes: ['nombre'],  // Atributos del modelo
+              include: [
+                {
+                  model: Marca,  // Incluimos Marca a través de Modelo
+                  as: 'marca',
+                  attributes: ['nombre'], // Atributos de la marca
+                }
+              ]
             },
             {
-              model: Modelo,
-              as: 'modelo',
-              attributes: ['nombre'], // Trae el nombre del modelo
+              model: Cliente,  // Incluimos Cliente a través del Equipo
+              as: 'cliente',
+              attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta los atributos según tu estructura
             }
           ],
         },
@@ -110,11 +119,6 @@ export const getOrdenTrabajoById = async (req, res) => {
           model: Usuario,
           as: 'usuario',
           attributes: ['nombre', 'apellido', 'email'], // Ajusta estos atributos según tu estructura
-        },
-        {
-          model: Cliente,
-          as: 'cliente',
-          attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta estos atributos según tu estructura
         },
         {
           model: ProductoOrden,
@@ -134,7 +138,7 @@ export const getOrdenTrabajoById = async (req, res) => {
             {
               model: Servicio,
               as: 'servicio',
-              attributes: ['nombre', 'precio'], // Incluye el nombre y el precio del servicio
+              attributes: ['nombre', 'preciosiniva', 'preciofinal', 'iva'], // Incluye el nombre y el precio del servicio
             }
           ]
         },
@@ -178,7 +182,7 @@ export const createOrdenTrabajo = async (req, res) => {
   const {
     id_equipo,
     id_usuario,
-    id_cliente,
+    cliente_id,
     area,
     prioridad,
     descripcion,
@@ -199,7 +203,7 @@ export const createOrdenTrabajo = async (req, res) => {
     const nuevaOrden = await OrdenTrabajo.create({
       id_equipo,
       id_usuario,
-      id_cliente,
+      cliente_id,
       area,
       prioridad,
       descripcion,
@@ -243,7 +247,7 @@ export const updateOrdenTrabajo = async (req, res) => {
   const {
     id_equipo,
     id_usuario,
-    id_cliente,
+    cliente_id,
     area,
     prioridad,
     descripcion,
@@ -274,7 +278,7 @@ export const updateOrdenTrabajo = async (req, res) => {
     await ordenExistente.update({
       id_equipo,
       id_usuario,
-      id_cliente,
+      cliente_id,
       area,
       prioridad,
       descripcion,

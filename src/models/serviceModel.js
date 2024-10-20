@@ -21,10 +21,21 @@ const Servicio = sequelize.define('servicio', {
     allowNull: false,
     field: 'nombre',
   },
-  precio: {
-    type: DataTypes.DECIMAL(10, 2),
+  preciosiniva: {
+    type: DataTypes.DECIMAL(10, 2),  // Añadido campo PRECIOSINIVA
     allowNull: false,
-    field: 'precio',
+    field: 'preciosiniva',
+  },
+  preciofinal: {
+    type: DataTypes.DECIMAL(10, 2),  // Añadido campo PRECIOFINAL
+    allowNull: false,
+    field: 'preciofinal',
+  },
+  iva: {
+    type: DataTypes.INTEGER,  // Añadido campo IVA con un valor por defecto de 12
+    allowNull: false,
+    defaultValue: 12,
+    field: 'iva',
   },
 }, {
   tableName: 'servicio',

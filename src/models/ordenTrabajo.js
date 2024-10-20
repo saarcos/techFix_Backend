@@ -1,13 +1,12 @@
-// models/OrdenTrabajo.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import ImagenOrden from './imagenOrden.js';
 import Equipo from './equipoModel.js'
 import Usuario from './userModel.js'
-import Cliente from './clientModel.js'
 import ProductoOrden from './productOrdenModel.js';
 import ServicioOrden from './servicioOrdenModel.js';
 import TareaOrden from './tareaOrdenModel.js';
+
 const OrdenTrabajo = sequelize.define('ordentrabajo', {
   id_orden: {
     type: DataTypes.INTEGER,
@@ -22,9 +21,9 @@ const OrdenTrabajo = sequelize.define('ordentrabajo', {
     type: DataTypes.INTEGER,
     allowNull: true, // Puede ser null
   },
-  id_cliente: {
+  cliente_id: {  // Cambiado de id_cliente a cliente_id
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: false, // Mantener el campo pero sin relación directa
   },
   numero_orden: {
     type: DataTypes.STRING(50),
@@ -81,23 +80,22 @@ const OrdenTrabajo = sequelize.define('ordentrabajo', {
 }, {
   tableName: 'ordentrabajo',
   timestamps: false,
-  
 });
+
 OrdenTrabajo.hasMany(ImagenOrden, {
     foreignKey: 'id_orden',
     as: 'imagenes',
-  });
+});
   
 ImagenOrden.belongsTo(OrdenTrabajo, {
     foreignKey: 'id_orden',
     as: 'orden',
 });
+
 OrdenTrabajo.belongsTo(Equipo, { foreignKey: 'id_equipo', as: 'equipo' });
 OrdenTrabajo.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
-OrdenTrabajo.belongsTo(Cliente, { foreignKey: 'id_cliente', as: 'cliente' });
-OrdenTrabajo.hasMany(ProductoOrden, {as: 'productos', foreignKey: 'id_orden'});
+OrdenTrabajo.hasMany(ProductoOrden, { as: 'productos', foreignKey: 'id_orden' });
 OrdenTrabajo.hasMany(ServicioOrden, { foreignKey: 'id_orden', as: 'servicios' });
 OrdenTrabajo.hasMany(TareaOrden, { foreignKey: 'id_orden', as: 'tareas' });
-
 
 export default OrdenTrabajo;

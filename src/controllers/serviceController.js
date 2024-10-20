@@ -12,11 +12,13 @@ export const getAllServicios = async (req, res) => {
 
 export const createServicio = async (req, res) => {
   try {
-    const { id_catserv, nombre, precio } = req.body;
+    const { id_catserv, nombre, preciosiniva, preciofinal, iva } = req.body;
     const nuevoServicio = await Servicio.create({
       id_catserv,
       nombre,
-      precio,
+      preciosiniva,
+      preciofinal,
+      iva,
     });
     res.status(201).json(nuevoServicio);
   } catch (error) {
@@ -40,14 +42,16 @@ export const getServicioById = async (req, res) => {
 export const updateServicio = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_catserv, nombre, precio } = req.body;
+    const { id_catserv, nombre, preciosiniva, preciofinal, iva } = req.body;
     const servicio = await Servicio.findByPk(id);
     if (!servicio) {
       return res.status(404).json({ message: 'Servicio no encontrado' });
     }
     servicio.id_catserv = id_catserv;
     servicio.nombre = nombre;
-    servicio.precio = precio;
+    servicio.preciosiniva = preciosiniva;
+    servicio.preciofinal = preciofinal;
+    servicio.iva = iva;
     await servicio.save();
     res.json(servicio);
   } catch (error) {
