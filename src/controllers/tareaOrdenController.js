@@ -98,6 +98,35 @@ export const getTareasFromOrder = async (req, res) => {
   }
 };
 
+export const getTareaFromOrderById = async (req, res) => {
+  const { id_tarea } = req.params;
+
+  try {
+    const resultado = await TareaOrden.findByPk(id_tarea, {
+      include: [
+        {
+          model: Tarea,
+          as: 'tarea',
+          attributes: ['titulo', 'descripcion', 'tiempo'],
+        },
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre', 'apellido'],
+        },
+      ],
+    });
+
+    if (!resultado) {
+      return res.status(404).json({ message: 'Tarea no encontrada en la orden' });
+    }
+
+    res.status(200).json(resultado);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Actualizar tarea en una orden
 export const updateTareaInOrder = async (req, res) => {
   const { id } = req.params;
