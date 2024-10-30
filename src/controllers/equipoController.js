@@ -4,6 +4,7 @@ import Marca from '../models/brandModel.js';
 import Modelo from '../models/modelModel.js';
 import { z } from 'zod';
 import TipoEquipo from '../models/tipoEquipoModel.js';
+import OrdenTrabajo from '../models/ordenTrabajo.js'
 
 export const equipoSchema = z.object({
   id_cliente: z.number().int().positive('El ID del cliente debe ser un número positivo'),
@@ -183,4 +184,25 @@ export const countEquipos = async (req, res) => {
     res.status(500).json({ error: 'Error al generar el número de serie' });
   }
 };
+// Contar las reparaciones de un equipo
+export const countRepairs = async (req, res) => {
+  const { id_equipo } = req.params;
+  try {
+    const equipo = await Equipo.findOne({ where: { id_equipo: id_equipo } });
 
+    if (!equipo) {
+      return res.status(404).json({ error: 'Equipo no encontrado' });
+    }
+
+    const repairCount = await OrdenTrabajo.count({
+      where: {
+        id_equipo: equipo.id_equipo
+      }
+    });
+
+    res.status(200).json({ repairCount });
+  } catch (error) {
+    console.error('Error al contar reparaciones:', error);
+    res.status(500).json({ error: 'Error al contar reparaciones' });
+  }
+};

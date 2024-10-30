@@ -81,7 +81,6 @@ export const getOrdenesTrabajo = async (req, res) => {
 };
 export const getOrdenTrabajoById = async (req, res) => {
   const { id_orden } = req.params;
-  console.log(id_orden)
   try {
     // Buscar la orden de trabajo por su ID
     const orden = await OrdenTrabajo.findByPk(id_orden, {
@@ -172,6 +171,100 @@ export const getOrdenTrabajoById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+export const getOrdenTrabajoByEquipoId = async (req, res) => {
+  const { id_equipo } = req.params;
+  try {
+    // Buscar todas las órdenes de trabajo que correspondan al equipo dado
+    const ordenes = await OrdenTrabajo.findAll({
+      where: { id_equipo },  // Filtro por id_equipo
+      include: [
+        {
+          model: ImagenOrden,
+          as: 'imagenes',
+          attributes: ['url_imagen'],
+        },
+        {
+          model: Equipo,
+          as: 'equipo',
+          attributes: ['nserie'],
+          include: [
+            {
+              model: Modelo,  // Incluimos Modelo
+              as: 'modelo',
+              attributes: ['nombre'],
+              include: [
+                {
+                  model: Marca,  // Incluimos Marca a través de Modelo
+                  as: 'marca',
+                  attributes: ['nombre'],
+                }
+              ]
+            },
+            {
+              model: Cliente,  // Incluimos Cliente a través del Equipo
+              as: 'cliente',
+              attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'],
+            }
+          ],
+        },
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre', 'apellido', 'email'],
+        },
+        {
+          model: ProductoOrden,
+          as: 'productos',
+          include: [
+            {
+              model: Producto,
+              as: 'producto',
+              attributes: ['nombreProducto', 'precioFinal', 'iva', 'precioSinIVA'],
+            }
+          ]
+        },
+        {
+          model: ServicioOrden,
+          as: 'servicios',
+          include: [
+            {
+              model: Servicio,
+              as: 'servicio',
+              attributes: ['nombre', 'preciosiniva', 'preciofinal', 'iva'],
+            }
+          ]
+        },
+        {
+          model: TareaOrden,
+          as: 'tareas',
+          include: [
+            {
+              model: Tarea,
+              as: 'tarea',
+              attributes: ['titulo', 'descripcion', 'tiempo']
+            },
+            {
+              model: Usuario,
+              as: 'usuario',
+              attributes: ['nombre', 'apellido'],
+            }
+          ]
+        }
+      ]
+    });
+
+    // Si no se encuentran órdenes
+    if (!ordenes || ordenes.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron órdenes de trabajo para este equipo' });
+    }
+
+    // Enviar la respuesta con las órdenes encontradas
+    res.status(200).json(ordenes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const createOrdenTrabajo = async (req, res) => {
   const result = ordenTrabajoSchema.safeParse(req.body);
 
