@@ -4,7 +4,7 @@ import Marca from '../models/brandModel.js';
 import Modelo from '../models/modelModel.js';
 import { z } from 'zod';
 import TipoEquipo from '../models/tipoEquipoModel.js';
-import OrdenTrabajo from '../models/ordenTrabajo.js'
+import OrdenTrabajo from '../models/ordenTrabajoModel.js'
 
 export const equipoSchema = z.object({
   id_cliente: z.number().int().positive('El ID del cliente debe ser un número positivo'),

@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
-import OrdenTrabajo from './ordenTrabajo.js';  // Asumiendo que ya tienes el modelo de orden
+import OrdenTrabajo from './ordenTrabajoModel.js';  // Asumiendo que ya tienes el modelo de orden
 import Accesorio from './accesorioModel.js';  // Modelo de accesorio definido arriba
 
 const AccesoriosDeOrden = sequelize.define('accesoriosdeorden', {

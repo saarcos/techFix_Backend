@@ -12,7 +12,7 @@ export const getAllProductos = async (req, res) => {
 
 export const createProducto = async (req, res) => {
   try {
-    const { id_catprod, nombreProducto, codigoProducto, precioSinIVA, precioFinal, iva, stock,  } = req.body;
+    const { id_catprod, nombreProducto, codigoProducto, precioSinIVA, precioFinal, iva  } = req.body;
     const nuevoProducto = await Producto.create({
       id_catprod,
       nombreProducto,
@@ -20,7 +20,6 @@ export const createProducto = async (req, res) => {
       precioSinIVA,
       precioFinal,
       iva,
-      stock,
     });
     res.status(201).json(nuevoProducto);
   } catch (error) {
@@ -44,7 +43,7 @@ export const getProductoById = async (req, res) => {
 export const updateProducto = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_catprod, nombreProducto, codigoProducto, precioSinIVA, precioFinal, iva, stock,  } = req.body;
+    const { id_catprod, nombreProducto, codigoProducto, precioSinIVA, precioFinal, iva } = req.body;
     const producto = await Producto.findByPk(id);
     if (!producto) {
       return res.status(404).json({ message: 'Producto no encontrado' });
@@ -55,7 +54,6 @@ export const updateProducto = async (req, res) => {
     producto.precioSinIVA = precioSinIVA;
     producto.precioFinal = precioFinal;
     producto.iva = iva;
-    producto.stock = stock;
     await producto.save();
     res.json(producto);
   } catch (error) {

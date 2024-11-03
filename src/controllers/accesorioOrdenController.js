@@ -1,6 +1,6 @@
 import AccesoriosDeOrden from '../models/accesorioOrdenModel.js';
 import { z } from 'zod';
-import OrdenTrabajo from '../models/ordenTrabajo.js';
+import OrdenTrabajo from '../models/ordenTrabajoModel.js';
 import Accesorio from '../models/accesorioModel.js';
 import sequelize from '../config/sequelize.js';
 

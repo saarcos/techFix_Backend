@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import OrdenTrabajo from '../models/ordenTrabajo.js';
+import OrdenTrabajo from '../models/ordenTrabajoModel.js';
 import ImagenOrden from '../models/imagenOrden.js';
 import Equipo from '../models/equipoModel.js';
 import Usuario from '../models/userModel.js';
@@ -7,13 +7,10 @@ import Cliente from '../models/clientModel.js';
 import Marca from '../models/brandModel.js'
 import Modelo from '../models/modelModel.js'
 import sequelize from '../config/sequelize.js';
-import ProductoOrden from '../models/productOrdenModel.js';
-import Producto from '../models/productModel.js';
-import ServicioOrden from '../models/servicioOrdenModel.js';
-import Servicio from '../models/serviceModel.js';
-import TareaOrden from '../models/tareaOrdenModel.js';
-import Tarea from '../models/tareaModel.js';
 import AccesoriosDeOrden from '../models/accesorioOrdenModel.js';
+import DetalleOrden from '../models/detalleOrdenModel.js';
+import Producto from '../models/productModel.js';
+import Servicio from '../models/serviceModel.js';
 
 export const ordenTrabajoSchema = z.object({
   id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
@@ -70,6 +67,28 @@ export const getOrdenesTrabajo = async (req, res) => {
           model: Usuario,
           as: 'usuario',
           attributes: ['nombre', 'apellido', 'email'], // Ajusta estos atributos según tu estructura
+        },
+        {
+          model: DetalleOrden, // Incluimos los detalles de la orden
+          as: 'detalles',
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal','status'],
+        },
+        {
+          model: DetalleOrden,
+          as: 'detalles',
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
+          include: [
+            {
+              model: Producto,
+              as: 'producto',
+              attributes: ['nombreProducto', 'preciofinal'],
+            },
+            {
+              model: Servicio,
+              as: 'servicio',
+              attributes: ['nombre', 'preciofinal'],
+            }
+          ]
         }
       ]
     });
@@ -120,40 +139,19 @@ export const getOrdenTrabajoById = async (req, res) => {
           attributes: ['nombre', 'apellido', 'email'], // Ajusta estos atributos según tu estructura
         },
         {
-          model: ProductoOrden,
-          as: 'productos',
+          model: DetalleOrden,
+          as: 'detalles',
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
           include: [
             {
               model: Producto,
               as: 'producto',
-              attributes: ['nombreProducto', 'precioFinal', 'iva', 'precioSinIVA'], // Incluye el nombre y el precio del producto
-            }
-          ]
-        },
-        {
-          model: ServicioOrden,
-          as: 'servicios',
-          include: [
+              attributes: ['nombreProducto', 'preciofinal'],
+            },
             {
               model: Servicio,
               as: 'servicio',
-              attributes: ['nombre', 'preciosiniva', 'preciofinal', 'iva'], // Incluye el nombre y el precio del servicio
-            }
-          ]
-        },
-        {
-          model: TareaOrden,
-          as: 'tareas',
-          include: [
-            {
-              model: Tarea,
-              as: 'tarea',
-              attributes: ['titulo', 'descripcion', 'tiempo'] // Incluye la información de la tarea
-            },
-            {
-              model: Usuario,
-              as: 'usuario',
-              attributes: ['nombre', 'apellido'], // Incluye el nombre del usuario asignado, si aplica
+              attributes: ['nombre', 'preciofinal'],
             }
           ]
         }
@@ -213,40 +211,24 @@ export const getOrdenTrabajoByEquipoId = async (req, res) => {
           attributes: ['nombre', 'apellido', 'email'],
         },
         {
-          model: ProductoOrden,
-          as: 'productos',
+          model: DetalleOrden, // Incluimos los detalles de la orden
+          as: 'detalles',
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal','status'],
+        },
+        {
+          model: DetalleOrden,
+          as: 'detalles',
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
           include: [
             {
               model: Producto,
               as: 'producto',
-              attributes: ['nombreProducto', 'precioFinal', 'iva', 'precioSinIVA'],
-            }
-          ]
-        },
-        {
-          model: ServicioOrden,
-          as: 'servicios',
-          include: [
+              attributes: ['nombreProducto', 'preciofinal'],
+            },
             {
               model: Servicio,
               as: 'servicio',
-              attributes: ['nombre', 'preciosiniva', 'preciofinal', 'iva'],
-            }
-          ]
-        },
-        {
-          model: TareaOrden,
-          as: 'tareas',
-          include: [
-            {
-              model: Tarea,
-              as: 'tarea',
-              attributes: ['titulo', 'descripcion', 'tiempo']
-            },
-            {
-              model: Usuario,
-              as: 'usuario',
-              attributes: ['nombre', 'apellido'],
+              attributes: ['nombre', 'preciofinal'],
             }
           ]
         }
@@ -355,9 +337,7 @@ export const updateOrdenTrabajo = async (req, res) => {
   } = result.data;
 
   const transaction = await sequelize.transaction();
-  await ProductoOrden.destroy({ where: { id_orden: id_orden }, transaction });
-  await ServicioOrden.destroy({ where: { id_orden: id_orden }, transaction });
-  await TareaOrden.destroy({where:{id_orden: id_orden}, transaction});
+  await DetalleOrden.destroy({ where: {id_orden}, transaction});
   await AccesoriosDeOrden.destroy({ where: { id_orden }, transaction });
   try {
     // Encontrar la orden de trabajo

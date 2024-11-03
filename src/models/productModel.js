@@ -42,11 +42,6 @@ const Producto = sequelize.define('producto', {
     defaultValue: 12,  // IVA por defecto del 12%
     field: 'iva',
   },
-  stock: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    field: 'stock',
-  },
 }, {
   tableName: 'producto',
   timestamps: false,

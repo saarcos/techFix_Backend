@@ -14,11 +14,10 @@ import productCategoryRoutes from './routes/productCategoryRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
 import serviceCategoryRoutes from './routes/serviceCategoryRoutes.js';
 import ordenTrabajoRoutes from './routes/ordenTrabajoRoutes.js';
-import tareaRoutes from './routes/tareaRoutes.js';
 import accesorioRoutes from './routes/accesorioRoutes.js';
-import productoOrdenRoutes from './routes/productoOrdenRoutes.js';
-import servicioOrdenRoutes from './routes/servicioOrdenRoutes.js';
-import tareaOrdenRoutes from './routes/tareaOrdenRoutes.js';
+import almacenRoutes from './routes/almacenRoutes.js'
+import existenciasRoutes from './routes/existenciasRoutes.js'
+import detalleOrdenRoutes from './routes/detalleOrdenRoutes.js'
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import 'dotenv/config';
@@ -50,12 +49,10 @@ app.use('/api', productCategoryRoutes);
 app.use('/api', serviceRoutes);
 app.use('/api', serviceCategoryRoutes);
 app.use('/api', ordenTrabajoRoutes);
-app.use('/api', tareaRoutes);
 app.use('/api', accesorioRoutes);
-app.use('/api', productoOrdenRoutes);
-app.use('/api', servicioOrdenRoutes);
-app.use('/api', tareaOrdenRoutes);
-
+app.use('/api', almacenRoutes);
+app.use('/api', existenciasRoutes);
+app.use('/api', detalleOrdenRoutes);
 
 // Sincronizar con la base de datos
 sequelize.authenticate()
