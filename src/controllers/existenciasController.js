@@ -9,7 +9,7 @@ export const getExistencias = async (req, res) => {
     const existencias = await Existencias.findAll({
       include: [
         { model: Almacen, as: 'almacen', attributes: ['nombre'] },
-        { model: Producto, as: 'producto', attributes: ['nombreProducto'] },  // Ajusta el atributo según el nombre del campo en tu modelo de producto
+        { model: Producto, as: 'producto', attributes: ['nombreProducto','codigoProducto'] },  // Ajusta el atributo según el nombre del campo en tu modelo de producto
       ],
     });
     res.status(200).json(existencias);
@@ -25,13 +25,32 @@ export const getExistenciaById = async (req, res) => {
     const existencia = await Existencias.findByPk(id_existencias, {
       include: [
         { model: Almacen, as: 'almacen', attributes: ['nombre'] },
-        { model: Producto, as: 'producto', attributes: ['nombreProducto'] },
+        { model: Producto, as: 'producto', attributes: ['nombreProducto','codigoProducto'] },
       ],
     });
     if (!existencia) {
       return res.status(404).json({ message: 'Existencia no encontrada' });
     }
     res.status(200).json(existencia);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+// Obtener existencia por ID
+export const getExistenciasByAlmacenId = async (req, res) => {
+  const { id_almacen } = req.params;
+  try {
+    const existencias = await Existencias.findAll(
+      { where: { id_almacen },  // Filtro por id_equipo
+      include: [
+        { model: Almacen, as: 'almacen', attributes: ['nombre'] },
+        { model: Producto, as: 'producto', attributes: ['nombreProducto','codigoProducto'] },
+      ],
+    });
+    if (!existencias) {
+      return res.status(404).json({ message: 'Existencias no encontradas' });
+    }
+    res.status(200).json(existencias);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -5,7 +5,8 @@ import {
   getExistenciaById,
   createExistencia,
   updateExistencia,
-  deleteExistencia
+  deleteExistencia,
+  getExistenciasByAlmacenId
 } from '../controllers/existenciasController.js';
 
 const router = express.Router();
@@ -15,6 +16,9 @@ router.get('/existencias', getExistencias);
 
 // Ruta para obtener una existencia por ID
 router.get('/existencias/:id_existencias', getExistenciaById);
+
+// Ruta para obtener las existencias por Almacén ID
+router.get('/existencias-almacen/:id_almacen', getExistenciasByAlmacenId);
 
 // Ruta para crear una nueva existencia
 router.post('/existencias', createExistencia);
