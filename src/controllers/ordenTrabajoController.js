@@ -433,3 +433,30 @@ export const deleteOrdenTrabajo = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+export const moveOrdenTrabajo = async (req, res) => {
+  const { id_orden } = req.params;
+  const { area, estado, id_usuario } = req.body;
+  console.log('id_usuario:', id_usuario); // Agrega esta línea para verificar el valor
+
+  try {
+    const ordenExistente = await OrdenTrabajo.findByPk(id_orden);
+
+    if (!ordenExistente) {
+      return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
+    }
+
+    // Construye el objeto de actualización excluyendo id_usuario si es null
+    const updateData = { area, estado };
+    if (id_usuario !== null) {
+      updateData.id_usuario = id_usuario;
+    }
+
+    await ordenExistente.update(updateData);
+
+    res.status(200).json({ message: 'Área de la orden actualizada exitosamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
