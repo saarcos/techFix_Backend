@@ -459,4 +459,70 @@ export const moveOrdenTrabajo = async (req, res) => {
   }
 };
 
+export const getOrdenesMetrics = async (req, res) => {
+  try {
+    const [weeklyData] = await sequelize.query(`
+      WITH weekly_data AS (
+        SELECT 
+          date_part('week', "created_at") AS week_number,
+          date_part('year', "created_at") AS year_number,
+          SUM("total") AS weekly_earnings
+        FROM "ordentrabajo"
+        WHERE "created_at" >= (CURRENT_DATE - interval '1 year')
+        GROUP BY week_number, year_number
+      )
+      SELECT 
+        current_week.weekly_earnings AS current_week_earnings,
+        COALESCE(
+          ROUND(((current_week.weekly_earnings - previous_week.weekly_earnings) / NULLIF(previous_week.weekly_earnings, 0)) * 100, 2),
+          0
+        ) AS weekly_change
+      FROM weekly_data AS current_week
+      LEFT JOIN weekly_data AS previous_week
+        ON current_week.week_number = previous_week.week_number + 1
+        AND current_week.year_number = previous_week.year_number
+      WHERE current_week.week_number = date_part('week', CURRENT_DATE)
+        AND current_week.year_number = date_part('year', CURRENT_DATE);
+    `);
+    const [monthlyData] = await sequelize.query(`
+      WITH monthly_data AS (
+        SELECT 
+          date_part('month', "created_at") AS month_number,
+          date_part('year', "created_at") AS year_number,
+          SUM("total") AS monthly_earnings
+        FROM "ordentrabajo"
+        WHERE "created_at" >= (CURRENT_DATE - interval '1 year')
+        GROUP BY month_number, year_number
+      )
+      SELECT 
+        current_month.monthly_earnings AS current_month_earnings,
+        COALESCE(
+          ROUND(((current_month.monthly_earnings - previous_month.monthly_earnings) / NULLIF(previous_month.monthly_earnings, 0)) * 100, 2),
+          0
+        ) AS monthly_change
+      FROM monthly_data AS current_month
+      LEFT JOIN monthly_data AS previous_month
+        ON current_month.month_number = previous_month.month_number + 1
+        AND current_month.year_number = previous_month.year_number
+      WHERE current_month.month_number = date_part('month', CURRENT_DATE)
+        AND current_month.year_number = date_part('year', CURRENT_DATE);
+    `);
+    res.status(200).json({
+      weekly: {
+        earnings: weeklyData[0]?.current_week_earnings || 0, // Acceder al primer elemento del array
+        change: weeklyData[0]?.weekly_change || 0,
+      },
+      monthly: {
+        earnings: monthlyData[0]?.current_month_earnings || 0, // Acceder al primer elemento del array
+        change: monthlyData[0]?.monthly_change || 0,
+      },
+    });
+  } catch (error) {
+    console.error('Error al calcular métricas del dashboard:', error);
+    res.status(500).json({ error: 'Error al calcular métricas del dashboard' });
+  }
+};
+
+
+
 
