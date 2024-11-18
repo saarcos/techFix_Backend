@@ -5,7 +5,9 @@ import {
   updateDetalleOrden, 
   deleteDetalleOrden, 
   getDetallesByOrdenId,
-  createDetallesOrden
+  createDetallesOrden,
+  getTechnicianPerformance,
+  getProductStockAndSales
 } from '../controllers/detalleOrdenController.js';
 
 const router = express.Router();
@@ -15,6 +17,12 @@ router.post('/detalleorden', createDetallesOrden);
 
 // Ruta para obtener todos los detalles de orden
 router.get('/detalleorden', getDetallesOrden);
+
+// Ruta para obtener las ganancias generadas por empleado
+router.get('/detalleorden/performanceTecnicos', getTechnicianPerformance);
+
+// Ruta para obtener los productos más vendidos y su stock actual
+router.get('/detalleorden/productosMasVendidos', getProductStockAndSales);
 
 // Ruta para obtener un detalle de orden por ID
 router.get('/detalleorden/:id_orden', getDetallesByOrdenId);

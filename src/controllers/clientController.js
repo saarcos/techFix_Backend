@@ -1,3 +1,4 @@
+import sequelize from '../config/sequelize.js';
 import Cliente from '../models/clientModel.js';
 import { z } from 'zod';
 
@@ -6,7 +7,7 @@ const clienteSchema = z.object({
     apellido: z.string().min(1, 'El apellido es obligatorio').max(100, 'El apellido no debe exceder 100 caracteres'),
     cedula: z.string().min(1, 'La cédula es obligatoria').max(13, 'La cédula no debe exceder 13 caracteres'),
     correo: z.string().email('Email inválido'),
-    celular: z.string().min(10, 'El número de teléfono tiene 10 caracteres').max(10,'El número de teléfono tiene 10 caracteres'),
+    celular: z.string().min(10, 'El número de teléfono tiene 10 caracteres').max(10, 'El número de teléfono tiene 10 caracteres'),
     tipo_cliente: z.enum(['Persona', 'Empresa'], 'El tipo de cliente debe ser "Persona" o "Empresa"')
 });
 
@@ -106,3 +107,44 @@ export const deleteClient = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+export const getNewClientsThisMonth = async (req, res) => {
+    try {
+        const [results] = await sequelize.query(`
+            WITH current_month AS (
+                SELECT COUNT(*) AS total
+                FROM "cliente"
+                WHERE "created_at" >= date_trunc('month', CURRENT_DATE)
+                AND "created_at" < (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month')
+            ),
+            previous_month AS (
+                SELECT COUNT(*) AS total
+                FROM "cliente"
+                WHERE "created_at" >= date_trunc('month', CURRENT_DATE) - INTERVAL '1 month'
+                AND "created_at" < date_trunc('month', CURRENT_DATE)
+            )
+            SELECT 
+                COALESCE(current_month.total, 0) AS current_month_total,
+                COALESCE(previous_month.total, 0) AS previous_month_total,
+                CASE 
+                    WHEN COALESCE(previous_month.total, 0) = 0 THEN 0
+                    ELSE ROUND(
+                        ((CAST(current_month.total AS NUMERIC) - CAST(previous_month.total AS NUMERIC)) 
+                        / GREATEST(CAST(previous_month.total AS NUMERIC), 1)) * 100, 2
+                    )
+                END AS percentage_change
+            FROM current_month, previous_month;
+        `);
+        const { current_month_total, previous_month_total, percentage_change } = results[0];
+
+        res.status(200).json({
+            newClients: current_month_total,
+            percentageChange: percentage_change,
+            previousMonthClients: previous_month_total,
+        });
+    } catch (error) {
+        console.error('Error al obtener nuevos clientes del mes:', error);
+        res.status(500).json({ error: 'Error al obtener nuevos clientes del mes' });
+    }
+};
+
+

@@ -59,7 +59,7 @@ export const getOrdenesTrabajo = async (req, res) => {
             {
               model: Cliente,  // Incluimos Cliente a través del Equipo
               as: 'cliente',
-              attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta los atributos según tu estructura
+              attributes: ['id_cliente', 'nombre', 'apellido', 'cedula', 'correo', 'celular'], // Ajusta los atributos según tu estructura
             }
           ],
         },
@@ -71,7 +71,7 @@ export const getOrdenesTrabajo = async (req, res) => {
         {
           model: DetalleOrden, // Incluimos los detalles de la orden
           as: 'detalles',
-          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal','status'],
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
         },
         {
           model: DetalleOrden,
@@ -213,7 +213,7 @@ export const getOrdenTrabajoByEquipoId = async (req, res) => {
         {
           model: DetalleOrden, // Incluimos los detalles de la orden
           as: 'detalles',
-          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal','status'],
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
         },
         {
           model: DetalleOrden,
@@ -337,7 +337,7 @@ export const updateOrdenTrabajo = async (req, res) => {
   } = result.data;
 
   const transaction = await sequelize.transaction();
-  await DetalleOrden.destroy({ where: {id_orden}, transaction});
+  await DetalleOrden.destroy({ where: { id_orden }, transaction });
   await AccesoriosDeOrden.destroy({ where: { id_orden }, transaction });
   try {
     // Encontrar la orden de trabajo
@@ -436,7 +436,6 @@ export const deleteOrdenTrabajo = async (req, res) => {
 export const moveOrdenTrabajo = async (req, res) => {
   const { id_orden } = req.params;
   const { area, estado, id_usuario } = req.body;
-  console.log('id_usuario:', id_usuario); // Agrega esta línea para verificar el valor
 
   try {
     const ordenExistente = await OrdenTrabajo.findByPk(id_orden);
@@ -468,22 +467,23 @@ export const getOrdenesMetrics = async (req, res) => {
           date_part('year', "created_at") AS year_number,
           SUM("total") AS weekly_earnings
         FROM "ordentrabajo"
-        WHERE "created_at" >= (CURRENT_DATE - interval '1 year')
+        WHERE "created_at" >= (NOW() - interval '1 year') -- Todo en UTC
         GROUP BY week_number, year_number
       )
       SELECT 
         current_week.weekly_earnings AS current_week_earnings,
         COALESCE(
-          ROUND(((current_week.weekly_earnings - previous_week.weekly_earnings) / NULLIF(previous_week.weekly_earnings, 0)) * 100, 2),
+          ROUND(((current_week.weekly_earnings - COALESCE(previous_week.weekly_earnings, 0)) / NULLIF(previous_week.weekly_earnings, 0)) * 100, 2),
           0
         ) AS weekly_change
       FROM weekly_data AS current_week
       LEFT JOIN weekly_data AS previous_week
         ON current_week.week_number = previous_week.week_number + 1
         AND current_week.year_number = previous_week.year_number
-      WHERE current_week.week_number = date_part('week', CURRENT_DATE)
-        AND current_week.year_number = date_part('year', CURRENT_DATE);
+      WHERE current_week.week_number = date_part('week', NOW()) -- Comparación en UTC
+        AND current_week.year_number = date_part('year', NOW());
     `);
+
     const [monthlyData] = await sequelize.query(`
       WITH monthly_data AS (
         SELECT 
@@ -507,13 +507,14 @@ export const getOrdenesMetrics = async (req, res) => {
       WHERE current_month.month_number = date_part('month', CURRENT_DATE)
         AND current_month.year_number = date_part('year', CURRENT_DATE);
     `);
+
     res.status(200).json({
       weekly: {
-        earnings: weeklyData[0]?.current_week_earnings || 0, // Acceder al primer elemento del array
+        earnings: weeklyData[0]?.current_week_earnings || 0,
         change: weeklyData[0]?.weekly_change || 0,
       },
       monthly: {
-        earnings: monthlyData[0]?.current_month_earnings || 0, // Acceder al primer elemento del array
+        earnings: monthlyData[0]?.current_month_earnings || 0,
         change: monthlyData[0]?.monthly_change || 0,
       },
     });
@@ -522,7 +523,135 @@ export const getOrdenesMetrics = async (req, res) => {
     res.status(500).json({ error: 'Error al calcular métricas del dashboard' });
   }
 };
+export const getGlobalMetrics = async (req, res) => {
+  try {
+    const [result] = await sequelize.query(`
+      SELECT 
+        COALESCE(SUM("total"), 0) AS "totalRecaudado",
+        COUNT(*) AS "totalOrdenes"
+      FROM "ordentrabajo"
+      WHERE "total" IS NOT NULL
+    `);
 
+    const metrics = result[0];
+    res.status(200).json({
+      totalRecaudado: metrics.totalRecaudado,
+      totalOrdenes: metrics.totalOrdenes,
+    });
+  } catch (error) {
+    console.error('Error al obtener métricas globales:', error);
+    res.status(500).json({ error: 'Error al obtener métricas globales' });
+  }
+};
+export const getRecurrentClients = async (req, res) => {
+  try {
+    const [results] = await sequelize.query(`
+      WITH total_clients AS (
+          SELECT COUNT(DISTINCT cliente_id) AS total_clients
+          FROM "ordentrabajo"
+          WHERE cliente_id IS NOT NULL
+      ),
+      recurrent_clients AS (
+          SELECT COUNT(DISTINCT cliente_id) AS recurrent_clients
+          FROM "ordentrabajo"
+          WHERE cliente_id IS NOT NULL
+          GROUP BY cliente_id
+          HAVING COUNT(id_orden) > 1
+      )
+      SELECT 
+          COALESCE((SELECT total_clients FROM total_clients LIMIT 1), 0) AS total_clients,
+          COALESCE((SELECT COUNT(*) FROM recurrent_clients), 0) AS recurrent_clients,
+          COALESCE(
+              ROUND(
+                  (CAST((SELECT COUNT(*) FROM recurrent_clients) AS NUMERIC) / 
+                  GREATEST(CAST((SELECT total_clients FROM total_clients LIMIT 1) AS NUMERIC), 1)) * 100, 
+                  2
+              ), 
+              0
+          ) AS percentage_recurrent;
+    `);
 
+    const {
+      total_clients: totalClients = 0,
+      recurrent_clients: recurrentClients = 0,
+      percentage_recurrent: percentageRecurrent = 0
+    } = results[0] || {};
+
+    res.status(200).json({
+      totalClients,
+      recurrentClients,
+      percentageRecurrent
+    });
+  } catch (error) {
+    console.error('Error al obtener clientes recurrentes:', error.message);
+    res.status(500).json({ error: 'Error al obtener clientes recurrentes' });
+  }
+};
+
+export const getRecentOrders = async (req, res) => {
+  try {
+    const [results] = await sequelize.query(`
+          WITH recent_clients AS (
+              SELECT 
+                  c.id_cliente,
+                  c.nombre,
+                  c.apellido,
+                  c.correo,
+                  SUM(o.total) AS total_spent,
+                  MAX(o.created_at) AS last_order_date
+              FROM cliente c
+              JOIN ordentrabajo o
+                ON c.id_cliente = o.cliente_id
+              WHERE o.created_at >= date_trunc('month', CURRENT_DATE)
+              GROUP BY c.id_cliente, c.nombre, c.apellido, c.correo
+              ORDER BY last_order_date DESC
+              LIMIT 5
+          ),
+          orders_this_month AS (
+              SELECT COUNT(*) AS total_orders
+              FROM ordentrabajo
+              WHERE created_at >= date_trunc('month', CURRENT_DATE)
+          )
+          SELECT 
+              (SELECT json_agg(recent_clients) FROM recent_clients) AS recent_clients,
+              (SELECT total_orders FROM orders_this_month) AS total_orders
+      `);
+
+    const { recent_clients, total_orders } = results[0];
+
+    res.status(200).json({
+      recentClients: recent_clients || [],
+      totalOrders: total_orders || 0,
+    });
+  } catch (error) {
+    console.error('Error al obtener métricas del dashboard:', error);
+    res.status(500).json({ error: 'Error al obtener métricas del dashboard' });
+  }
+};
+export const getMonthlyEarnings = async (req, res) => {
+  try {
+    const [results] = await sequelize.query(`
+      SET lc_time = 'es_ES';
+      WITH monthly_data AS (
+        SELECT 
+          date_trunc('month', "created_at") AS month,
+          SUM("total") AS total_earnings
+        FROM "ordentrabajo"
+        WHERE "created_at" >= date_trunc('month', CURRENT_DATE) - INTERVAL '5 months'
+        GROUP BY date_trunc('month', "created_at")
+      )
+      SELECT 
+        TO_CHAR(month, 'TMMonth') AS month_label,
+        COALESCE(total_earnings, 0) AS total_earnings
+      FROM monthly_data
+      ORDER BY month ASC;
+    `);
+
+    res.status(200).json({ monthlyEarnings: results });
+  } catch (error) {
+    console.error('Error al obtener ganancias mensuales:', error);
+    res.status(500).json({ error: 'Error al obtener ganancias mensuales' });
+  }
+};
 
 

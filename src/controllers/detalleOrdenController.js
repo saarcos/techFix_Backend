@@ -3,6 +3,7 @@ import DetalleOrden from '../models/detalleOrdenModel.js';
 import Existencias from '../models/existenciasModel.js';
 import Producto from '../models/productModel.js';
 import Servicio from '../models/serviceModel.js';
+import sequelize from '../config/sequelize.js';
 
 // Crear múltiples detalles de orden con verificación de stock
 export const createDetallesOrden = async (req, res) => {
@@ -157,5 +158,55 @@ export const deleteDetalleOrden = async (req, res) => {
     res.status(200).json({ message: 'Detalle de orden eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+// Controlador: Obtener el rendimiento de los técnicos desde la tabla detalleorden
+export const getTechnicianPerformance = async (req, res) => {
+  try {
+    const [results] = await sequelize.query(`
+      SELECT 
+        CONCAT(u.nombre, ' ', u.apellido) AS technician_name,
+        SUM(d.preciototal) AS total_revenue
+      FROM "detalleorden" d
+      JOIN "usuario" u ON d.id_usuario = u.id_usuario
+      WHERE d.id_usuario IS NOT NULL 
+      GROUP BY u.id_usuario, u.nombre, u.apellido
+      ORDER BY total_revenue DESC
+      LIMIT 5; 
+    `);
+
+    res.status(200).json(results);
+  } catch (error) {
+    console.error("Error al obtener el rendimiento de los técnicos:", error);
+    res.status(500).json({ error: "Error al obtener el rendimiento de los técnicos" });
+  }
+};
+export const getProductStockAndSales = async (req, res) => {
+  try {
+    const [results] = await sequelize.query(`
+      SELECT 
+          p.nombreproducto AS product_name,
+          COUNT(d.id_producto) AS total_sold,
+          COALESCE(SUM(d.preciototal), 0) AS total_revenue,
+          COALESCE(SUM(e.cantidad), 0) AS current_stock
+      FROM producto p
+      INNER JOIN detalleorden d ON p.id_producto = d.id_producto
+      LEFT JOIN existencias e ON p.id_producto = e.id_producto
+      GROUP BY p.nombreproducto
+      ORDER BY total_sold DESC
+      LIMIT 5;
+    `);
+
+    // Formatear la respuesta para adaptarla al frontend
+    const formattedResults = results.map((row) => ({
+      product: row.product_name,
+      stock: parseInt(row.current_stock, 10),
+      used: parseInt(row.total_sold, 10),
+    }));
+
+    res.status(200).json(formattedResults);
+  } catch (error) {
+    console.error("Error al obtener los productos más vendidos:", error);
+    res.status(500).json({ error: "Error al obtener los productos más vendidos" });
   }
 };

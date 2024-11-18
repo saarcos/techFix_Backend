@@ -9,6 +9,10 @@ import {
     getOrdenTrabajoByEquipoId,
     moveOrdenTrabajo,
     getOrdenesMetrics,
+    getGlobalMetrics,
+    getRecurrentClients,
+    getRecentOrders,
+    getMonthlyEarnings,
 } from '../controllers/ordenTrabajoController.js';
 
 const router = express.Router();
@@ -19,6 +23,14 @@ router.post('/ordenes', createOrdenTrabajo);
 router.get('/ordenes', getOrdenesTrabajo);
 // Ruta para obtener las ganancias semanales y mensuales de las ordenes de trabajo.
 router.get('/ordenes/metrics', getOrdenesMetrics)
+// Ruta para obtener las ganancias totales y cantidad de órdenes procesadas en el taller.
+router.get('/ordenes/globalMetrics', getGlobalMetrics)
+// Ruta para obtener los clientes que han vuelto al taller
+router.get('/ordenes/clientMetrics', getRecurrentClients)
+// Ruta para obtener los clientes que han vuelto al taller
+router.get('/ordenes/monthlyEarnings', getMonthlyEarnings)
+// Ruta para obtener las 5 órdenes más recientes
+router.get('/ordenes/recentOrders', getRecentOrders)
 // Ruta para obtener una orden de trabajo por id.
 router.get('/ordenes/:id_orden', getOrdenTrabajoById);
 // Ruta para obtener todas las ordenes de trabajo en donde consta un equipo por su id.
