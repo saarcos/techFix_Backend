@@ -11,7 +11,13 @@ export const equipoSchema = z.object({
   id_tipoe: z.number().int().positive('El ID del tipo de equipo debe ser un número positivo'),
   marca_id: z.number().int().positive('El ID de la marca debe ser un número positivo'),
   id_modelo: z.number().int().positive('El ID del modelo debe ser un número positivo'),
-  nserie: z.string().min(1, 'El número de serie es obligatorio').max(100, 'El número de serie no debe exceder 100 caracteres'),
+  nserie: z
+  .string()
+  .optional()
+  .refine(
+    (val) => !val || (val.length >= 5 && val.length <= 20),
+    { message: 'El número de serie debe tener entre 5 y 20 caracteres si se proporciona' }
+  ),
   descripcion: z.string().optional()
 });
 
@@ -147,41 +153,6 @@ export const deleteEquipo = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
-  }
-};
-// Generar el serial del equipo (POST)
-export const countEquipos = async (req, res) => {
-  const { id_tipoe, marca_id, id_modelo } = req.body;  // Cambia req.query a req.body
-
-  // Convertir los parámetros a enteros
-  const id_tipoe_num = parseInt(id_tipoe, 10);
-  const marca_id_num = parseInt(marca_id, 10);
-  const id_modelo_num = parseInt(id_modelo, 10);
-
-
-  // Validar que los parámetros sean números
-  if (isNaN(id_tipoe_num) || isNaN(marca_id_num) || isNaN(id_modelo_num)) {
-    return res.status(400).json({ error: 'Los parámetros deben ser números enteros válidos.' });
-  }
-
-  try {
-    // Contar cuántos equipos existen con ese tipo, marca y modelo
-    const total = await Equipo.count({
-      where: {
-        id_tipoe: id_tipoe_num,
-        marca_id: marca_id_num,
-        id_modelo: id_modelo_num
-      }
-    });
-
-    // Incrementamos el total para obtener el siguiente número secuencial
-    const nextSequential = (total + 1).toString().padStart(3, '0');
-
-    // Devolvemos el número secuencial generado
-    res.json({ nextSequential });
-  } catch (error) {
-    console.error('Error al generar el número de serie:', error);
-    res.status(500).json({ error: 'Error al generar el número de serie' });
   }
 };
 // Contar las reparaciones de un equipo

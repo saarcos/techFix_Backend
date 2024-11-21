@@ -4,6 +4,7 @@ import ImagenOrden from './imagenOrden.js';
 import Equipo from './equipoModel.js'
 import Usuario from './userModel.js'
 import DetalleOrden from './detalleOrdenModel.js';
+import AccesoriosDeOrden from './accesorioOrdenModel.js';
 
 const OrdenTrabajo = sequelize.define('ordentrabajo', {
   id_orden: {
@@ -96,6 +97,7 @@ OrdenTrabajo.hasMany(DetalleOrden, {
   foreignKey: 'id_orden',
   as: 'detalles'
 });
+OrdenTrabajo.hasMany(AccesoriosDeOrden,{foreignKey: 'id_orden', as:'accesorios'})
 
 
 export default OrdenTrabajo;

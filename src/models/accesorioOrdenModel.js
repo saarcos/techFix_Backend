@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
-import OrdenTrabajo from './ordenTrabajoModel.js';  // Asumiendo que ya tienes el modelo de orden
 import Accesorio from './accesorioModel.js';  // Modelo de accesorio definido arriba
 
 const AccesoriosDeOrden = sequelize.define('accesoriosdeorden', {
@@ -12,10 +11,6 @@ const AccesoriosDeOrden = sequelize.define('accesoriosdeorden', {
   id_orden: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: OrdenTrabajo,
-      key: 'id_orden'
-    }
   },
   id_accesorio: {
     type: DataTypes.INTEGER,

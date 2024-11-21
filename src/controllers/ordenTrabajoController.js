@@ -11,6 +11,7 @@ import AccesoriosDeOrden from '../models/accesorioOrdenModel.js';
 import DetalleOrden from '../models/detalleOrdenModel.js';
 import Producto from '../models/productModel.js';
 import Servicio from '../models/serviceModel.js';
+import Accesorio from '../models/accesorioModel.js';
 
 export const ordenTrabajoSchema = z.object({
   id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
@@ -69,11 +70,6 @@ export const getOrdenesTrabajo = async (req, res) => {
           attributes: ['nombre', 'apellido', 'email'], // Ajusta estos atributos según tu estructura
         },
         {
-          model: DetalleOrden, // Incluimos los detalles de la orden
-          as: 'detalles',
-          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
-        },
-        {
           model: DetalleOrden,
           as: 'detalles',
           attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
@@ -81,12 +77,24 @@ export const getOrdenesTrabajo = async (req, res) => {
             {
               model: Producto,
               as: 'producto',
-              attributes: ['nombreProducto', 'preciofinal'],
+              attributes: ['nombreProducto', 'preciofinal', 'preciosiniva', 'iva'],
             },
             {
               model: Servicio,
               as: 'servicio',
-              attributes: ['nombre', 'preciofinal'],
+              attributes: ['nombre', 'preciofinal', 'preciosiniva', 'iva'],
+            }
+          ]
+        },
+        {
+          model: AccesoriosDeOrden,
+          as:'accesorios',
+          attributes: ["id_accesorioord"],
+          include: [
+            {
+              model: Accesorio,
+              as: 'Accesorio',
+              attributes: ['nombre']
             }
           ]
         }

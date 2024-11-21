@@ -65,12 +65,12 @@ export const getDetallesOrden = async (req, res) => {
         {
           model: Producto, 
           as: 'producto', 
-          attributes: ['nombreProducto', 'preciofinal'], 
+          attributes: ['nombreProducto', 'preciofinal', 'preciosiniva', 'iva'], 
         },
         {
           model: Servicio, 
           as: 'servicio', 
-          attributes: ['nombre', 'preciofinal'], 
+          attributes: ['nombre', 'preciofinal','preciosiniva', 'iva'], 
         }
       ]
     });
@@ -89,12 +89,12 @@ export const getDetallesByOrdenId = async (req, res) => {
         {
           model: Producto, 
           as: 'producto', 
-          attributes: ['nombreProducto', 'preciofinal'], 
+          attributes: ['nombreProducto', 'preciofinal', 'preciosiniva', 'iva'], 
         },
         {
           model: Servicio, 
           as: 'servicio', 
-          attributes: ['nombre', 'preciofinal'], 
+          attributes: ['nombre', 'preciofinal','preciosiniva', 'iva'], 
         }
       ]
     });

@@ -5,10 +5,14 @@ import {
   getAlmacenById,
   createAlmacen,
   updateAlmacen,
-  deleteAlmacen
+  deleteAlmacen,
+  getProductosConStock,
 } from '../controllers/almacenController.js';
 
 const router = express.Router();
+
+// Ruta para obtener los productos con stock disponible
+router.get('/almacenes/productosDisponibles', getProductosConStock)
 
 // Ruta para obtener todos los almacenes
 router.get('/almacenes', getAlmacenes);

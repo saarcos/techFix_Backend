@@ -1,5 +1,6 @@
 // controllers/almacenController.js
 import Almacen from '../models/almacenModel.js';
+import sequelize from '../config/sequelize.js';
 
 // Obtener todos los almacenes
 export const getAlmacenes = async (req, res) => {
@@ -64,5 +65,26 @@ export const deleteAlmacen = async (req, res) => {
     res.status(200).json({ message: 'Almacén eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const getProductosConStock = async (req, res) => {
+  try {
+    const [productosConStock] = await sequelize.query(`
+      SELECT 
+        p.id_producto,
+        p.nombreProducto,
+        p.precioFinal,
+        SUM(e.cantidad) AS stockTotal
+      FROM existencias e
+      INNER JOIN producto p ON e.id_producto = p.id_producto
+      GROUP BY p.id_producto, p.nombreProducto, p.precioFinal
+      HAVING SUM(e.cantidad) > 0
+    `);
+
+    res.status(200).json(productosConStock);
+  } catch (error) {
+    console.error('Error al obtener productos con stock:', error);
+    res.status(500).json({ error: 'Error al obtener productos con stock' });
   }
 };
