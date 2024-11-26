@@ -98,9 +98,6 @@ export const getDetallesByOrdenId = async (req, res) => {
         }
       ]
     });
-
-   
-
     res.status(200).json(detalles);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -179,34 +176,5 @@ export const getTechnicianPerformance = async (req, res) => {
   } catch (error) {
     console.error("Error al obtener el rendimiento de los técnicos:", error);
     res.status(500).json({ error: "Error al obtener el rendimiento de los técnicos" });
-  }
-};
-export const getProductStockAndSales = async (req, res) => {
-  try {
-    const [results] = await sequelize.query(`
-      SELECT 
-          p.nombreproducto AS product_name,
-          COUNT(d.id_producto) AS total_sold,
-          COALESCE(SUM(d.preciototal), 0) AS total_revenue,
-          COALESCE(SUM(e.cantidad), 0) AS current_stock
-      FROM producto p
-      INNER JOIN detalleorden d ON p.id_producto = d.id_producto
-      LEFT JOIN existencias e ON p.id_producto = e.id_producto
-      GROUP BY p.nombreproducto
-      ORDER BY total_sold DESC
-      LIMIT 5;
-    `);
-
-    // Formatear la respuesta para adaptarla al frontend
-    const formattedResults = results.map((row) => ({
-      product: row.product_name,
-      stock: parseInt(row.current_stock, 10),
-      used: parseInt(row.total_sold, 10),
-    }));
-
-    res.status(200).json(formattedResults);
-  } catch (error) {
-    console.error("Error al obtener los productos más vendidos:", error);
-    res.status(500).json({ error: "Error al obtener los productos más vendidos" });
   }
 };

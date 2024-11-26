@@ -12,6 +12,7 @@ import DetalleOrden from '../models/detalleOrdenModel.js';
 import Producto from '../models/productModel.js';
 import Servicio from '../models/serviceModel.js';
 import Accesorio from '../models/accesorioModel.js';
+import Existencias from '../models/existenciasModel.js';
 
 export const ordenTrabajoSchema = z.object({
   id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
@@ -345,16 +346,28 @@ export const updateOrdenTrabajo = async (req, res) => {
   } = result.data;
 
   const transaction = await sequelize.transaction();
-  await DetalleOrden.destroy({ where: { id_orden }, transaction });
   await AccesoriosDeOrden.destroy({ where: { id_orden }, transaction });
   try {
+    // Restaurar el stock antes de eliminar los detalles
+    const detallesExistentes = await DetalleOrden.findAll({ where: { id_orden }, transaction });
+    for (const detalle of detallesExistentes) {
+      if (detalle.id_producto) {
+        await Existencias.increment('cantidad', {
+          by: detalle.cantidad,
+          where: { id_producto: detalle.id_producto, id_almacen: 1 }, // Usamos un único almacén
+          transaction,
+        });
+      }
+    }
+    // Eliminar todos los detalles de la orden
+    await DetalleOrden.destroy({ where: { id_orden }, transaction });
+
     // Encontrar la orden de trabajo
     const ordenExistente = await OrdenTrabajo.findByPk(id_orden, { transaction });
 
     if (!ordenExistente) {
       return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
     }
-
     // Actualizar la orden de trabajo
     await ordenExistente.update({
       id_equipo,
@@ -402,11 +415,8 @@ export const updateOrdenTrabajo = async (req, res) => {
         await ImagenOrden.destroy({ where: { id_orden }, transaction });
       }
     }
-
-
     // Confirmar la transacción
     await transaction.commit();
-
     res.status(200).json({ message: 'Orden de trabajo actualizada exitosamente', orden: ordenExistente });
   } catch (error) {
     await transaction.rollback();

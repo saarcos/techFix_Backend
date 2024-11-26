@@ -6,8 +6,7 @@ import {
   deleteDetalleOrden, 
   getDetallesByOrdenId,
   createDetallesOrden,
-  getTechnicianPerformance,
-  getProductStockAndSales
+  getTechnicianPerformance
 } from '../controllers/detalleOrdenController.js';
 
 const router = express.Router();
@@ -20,9 +19,6 @@ router.get('/detalleorden', getDetallesOrden);
 
 // Ruta para obtener las ganancias generadas por empleado
 router.get('/detalleorden/performanceTecnicos', getTechnicianPerformance);
-
-// Ruta para obtener los productos más vendidos y su stock actual
-router.get('/detalleorden/productosMasVendidos', getProductStockAndSales);
 
 // Ruta para obtener un detalle de orden por ID
 router.get('/detalleorden/:id_orden', getDetallesByOrdenId);
