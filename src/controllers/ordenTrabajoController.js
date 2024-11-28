@@ -615,14 +615,13 @@ export const getRecentOrders = async (req, res) => {
                   c.nombre,
                   c.apellido,
                   c.correo,
-                  SUM(o.total) AS total_spent,
-                  MAX(o.created_at) AS last_order_date
+                  o.total AS total_spent,
+                  o.created_at AS last_order_date
               FROM cliente c
               JOIN ordentrabajo o
                 ON c.id_cliente = o.cliente_id
               WHERE o.created_at >= date_trunc('month', CURRENT_DATE)
-              GROUP BY c.id_cliente, c.nombre, c.apellido, c.correo
-              ORDER BY last_order_date DESC
+              ORDER BY o.created_at DESC
               LIMIT 5
           ),
           orders_this_month AS (
@@ -646,6 +645,7 @@ export const getRecentOrders = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener métricas del dashboard' });
   }
 };
+
 export const getMonthlyEarnings = async (req, res) => {
   try {
     const [results] = await sequelize.query(`
