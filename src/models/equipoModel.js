@@ -45,7 +45,7 @@ const Equipo = sequelize.define('Equipo', {
   },
   nserie: {
     type: DataTypes.STRING(100),
-    allowNull: false,
+    allowNull: true,
     unique: true,
     field: 'nserie'
   },

@@ -31,10 +31,15 @@ export const createEquipo = async (req, res) => {
   const { id_cliente, id_tipoe, marca_id, id_modelo, nserie, descripcion } = result.data;
 
   try {
-    const existingNserie = await Equipo.findOne({ where: { nserie: nserie } });
-    if (existingNserie) {
-      return res.status(400).json({ error: 'Ya existe un equipo con ese número de serie' });
+    // Verifica si nserie no es undefined o null antes de buscarlo
+    if (nserie) {
+      const existingNserie = await Equipo.findOne({ where: { nserie: nserie } });
+      if (existingNserie) {
+        return res.status(400).json({ error: 'Ya existe un equipo con ese número de serie' });
+      }
     }
+
+    // Crea el nuevo equipo sin problemas
     const newEquipo = await Equipo.create({ id_cliente, id_tipoe, marca_id, id_modelo, nserie, descripcion });
     res.status(201).json(newEquipo);
   } catch (error) {
