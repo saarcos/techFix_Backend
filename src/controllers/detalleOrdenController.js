@@ -13,7 +13,19 @@ export const createDetallesOrden = async (req, res) => {
     const nuevosDetalles = [];
 
     for (const detalle of detalles) {
-      const { id_orden, id_usuario, id_servicio, id_producto, precioservicio, precioproducto, cantidad, status } = detalle;
+      const {
+        id_orden,
+        id_usuario,
+        id_servicio,
+        id_producto,
+        precioservicio,
+        precioproducto,
+        cantidad,
+        status,
+      } = detalle;
+
+      // Validar que cantidad no sea null o undefined, usar 1 como valor predeterminado
+      const cantidadFinal = cantidad !== undefined && cantidad !== null ? cantidad : 1;
 
       let existencias;
       // Verificar si el producto tiene stock suficiente en Existencias
@@ -22,13 +34,17 @@ export const createDetallesOrden = async (req, res) => {
           where: { id_producto },
         });
 
-        if (!existencias || existencias.cantidad < cantidad) {
-          return res.status(400).json({ message: `Stock insuficiente para el producto con ID ${id_producto}` });
+        if (!existencias || existencias.cantidad < cantidadFinal) {
+          return res
+            .status(400)
+            .json({ message: `Stock insuficiente para el producto con ID ${id_producto}` });
         }
       }
 
-      // Calcular el precio total
-      const preciototal = (precioproducto || 0) * cantidad + (precioservicio || 0);
+      // Calcular el precio total con validaciones explícitas
+      const precioservicioFinal = precioservicio !== undefined && precioservicio !== null ? precioservicio : 0;
+      const precioproductoFinal = precioproducto !== undefined && precioproducto !== null ? precioproducto : 0;
+      const preciototal = precioproductoFinal * cantidadFinal + precioservicioFinal;
 
       // Crear el detalle de orden
       const nuevoDetalle = await DetalleOrden.create({
@@ -36,16 +52,16 @@ export const createDetallesOrden = async (req, res) => {
         id_usuario,
         id_servicio,
         id_producto,
-        precioservicio,
-        precioproducto,
-        cantidad,
+        precioservicio: precioservicioFinal,
+        precioproducto: precioproductoFinal,
+        cantidad: cantidadFinal,
         preciototal,
         status,
       });
 
       // Si hay stock, actualizar la cantidad en Existencias
       if (id_producto) {
-        await existencias.update({ cantidad: existencias.cantidad - cantidad });
+        await existencias.update({ cantidad: existencias.cantidad - cantidadFinal });
       }
 
       nuevosDetalles.push(nuevoDetalle);
@@ -56,6 +72,7 @@ export const createDetallesOrden = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Obtener todos los detalles de una orden con productos y servicios
 export const getDetallesOrden = async (req, res) => {

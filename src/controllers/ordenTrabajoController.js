@@ -13,6 +13,8 @@ import Producto from '../models/productModel.js';
 import Servicio from '../models/serviceModel.js';
 import Accesorio from '../models/accesorioModel.js';
 import Existencias from '../models/existenciasModel.js';
+import { crearNotificacion } from './notificacionController.js';
+import Notificacion from '../models/notificacionModel.js';
 
 export const ordenTrabajoSchema = z.object({
   id_equipo: z.number().int().min(1, 'El ID del equipo es obligatorio'),
@@ -347,6 +349,7 @@ export const updateOrdenTrabajo = async (req, res) => {
 
   const transaction = await sequelize.transaction();
   await AccesoriosDeOrden.destroy({ where: { id_orden }, transaction });
+  await Notificacion.destroy({where: {id_referencia: id_orden}, transaction})
   try {
     // Restaurar el stock antes de eliminar los detalles
     const detallesExistentes = await DetalleOrden.findAll({ where: { id_orden }, transaction });
@@ -413,6 +416,18 @@ export const updateOrdenTrabajo = async (req, res) => {
       } else {
         // Si el array de imágenes está vacío, eliminar todas las imágenes asociadas a la orden
         await ImagenOrden.destroy({ where: { id_orden }, transaction });
+      }
+    }
+    if (id_usuario) {
+      req.io.to(`user_${id_usuario}`).emit('ordenAsignada', {
+        id_orden,
+        message: `Se te ha asignado una nueva orden de trabajo con ID ${id_orden}.`,
+      });
+      try {
+        await crearNotificacion(id_usuario, id_orden, `Se te ha asignado una nueva orden de trabajo con ID ${id_orden}.`);
+        console.log(`Notificación guardada para el usuario ${id_usuario}`);
+      } catch (error) {
+        console.error('Error al guardar notificación:', error.message);
       }
     }
     // Confirmar la transacción
