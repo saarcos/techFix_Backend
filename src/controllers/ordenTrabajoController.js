@@ -424,7 +424,7 @@ export const updateOrdenTrabajo = async (req, res) => {
         message: `Se te ha asignado una nueva orden de trabajo con ID ${id_orden}.`,
       });
       try {
-        await crearNotificacion(id_usuario, id_orden, `Se te ha asignado una nueva orden de trabajo con ID ${id_orden}.`);
+        await crearNotificacion(id_usuario, id_orden, `Se te ha asignado una nueva orden de trabajo.`);
         console.log(`Notificación guardada para el usuario ${id_usuario}`);
       } catch (error) {
         console.error('Error al guardar notificación:', error.message);
