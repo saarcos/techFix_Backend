@@ -15,7 +15,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: 'Contraseña incorrecta' });
     }
     const token = jwt.sign(
-      { id_usuario: usuario.id_usuario, id_rol: usuario.id_rol, email: usuario.email, nombre: usuario.nombre },
+      { id: usuario.id_usuario, id_rol: usuario.id_rol, email: usuario.email, nombre: usuario.nombre },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
