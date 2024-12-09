@@ -419,10 +419,6 @@ export const updateOrdenTrabajo = async (req, res) => {
       }
     }
     if (id_usuario) {
-      req.io.to(`user_${id_usuario}`).emit('ordenAsignada', {
-        id_orden,
-        message: `Se te ha asignado una nueva orden de trabajo con ID ${id_orden}.`,
-      });
       try {
         await crearNotificacion(id_usuario, id_orden, `Se te ha asignado una nueva orden de trabajo.`);
         console.log(`Notificación guardada para el usuario ${id_usuario}`);
@@ -451,9 +447,7 @@ export const deleteOrdenTrabajo = async (req, res) => {
       return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
     }
 
-    // Eliminar las imágenes asociadas
-    await ImagenOrden.destroy({ where: { id_orden }, transaction });
-
+    await Notificacion.destroy({where: {id_referencia: id_orden}, transaction})
     // Eliminar la orden de trabajo
     await OrdenTrabajo.destroy({ where: { id_orden }, transaction });
 

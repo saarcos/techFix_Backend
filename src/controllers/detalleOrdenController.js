@@ -4,6 +4,7 @@ import Existencias from '../models/existenciasModel.js';
 import Producto from '../models/productModel.js';
 import Servicio from '../models/serviceModel.js';
 import sequelize from '../config/sequelize.js';
+import { crearNotificacion } from './notificacionController.js';
 
 // Crear múltiples detalles de orden con verificación de stock
 export const createDetallesOrden = async (req, res) => {
@@ -63,7 +64,14 @@ export const createDetallesOrden = async (req, res) => {
       if (id_producto) {
         await existencias.update({ cantidad: existencias.cantidad - cantidadFinal });
       }
-
+       // Verificar y crear notificación si es necesario
+       if (id_usuario && status!== true) {
+          await crearNotificacion(
+            id_usuario,
+            id_orden,
+            `Se te ha asignado un nuevo detalle en la orden.`
+          );
+      }
       nuevosDetalles.push(nuevoDetalle);
     }
 
