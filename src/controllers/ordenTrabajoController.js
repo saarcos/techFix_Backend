@@ -23,7 +23,6 @@ export const ordenTrabajoSchema = z.object({
   area: z.string().min(1, 'El área es obligatoria').max(50, 'El área no debe exceder 50 caracteres'),
   prioridad: z.string().min(1, 'La prioridad es obligatoria').max(50, 'La prioridad no debe exceder 50 caracteres'),
   descripcion: z.string().min(1, 'La descripción es obligatoria'),
-  estado: z.string().min(1, 'El estado es obligatorio').max(50, 'El estado no debe exceder 50 caracteres'),
   fecha_prometida: z.string().transform((str) => new Date(str)).nullable().optional(),
   presupuesto: z.number().nullable().optional(),
   adelanto: z.number().nullable().optional(),
@@ -246,9 +245,86 @@ export const getOrdenTrabajoByEquipoId = async (req, res) => {
       ]
     });
 
-    // Si no se encuentran órdenes
-    if (!ordenes || ordenes.length === 0) {
-      return res.status(404).json({ message: 'No se encontraron órdenes de trabajo para este equipo' });
+     // Si no se encuentran órdenes, devolver un arreglo vacío
+     if (!ordenes || ordenes.length === 0) {
+      return res.status(200).json([]); // Responder con un arreglo vacío
+    }
+
+    // Enviar la respuesta con las órdenes encontradas
+    res.status(200).json(ordenes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+export const getOrdenTrabajoByClienteId = async (req, res) => {
+  const { cliente_id } = req.params;
+  try {
+    // Buscar todas las órdenes de trabajo que correspondan al equipo dado
+    const ordenes = await OrdenTrabajo.findAll({
+      where: { cliente_id },  // Filtro por id_equipo
+      include: [
+        {
+          model: ImagenOrden,
+          as: 'imagenes',
+          attributes: ['url_imagen'],
+        },
+        {
+          model: Equipo,
+          as: 'equipo',
+          attributes: ['nserie'],
+          include: [
+            {
+              model: Modelo,  // Incluimos Modelo
+              as: 'modelo',
+              attributes: ['nombre'],
+              include: [
+                {
+                  model: Marca,  // Incluimos Marca a través de Modelo
+                  as: 'marca',
+                  attributes: ['nombre'],
+                }
+              ]
+            },
+            {
+              model: Cliente,  // Incluimos Cliente a través del Equipo
+              as: 'cliente',
+              attributes: ['nombre', 'apellido', 'cedula', 'correo', 'celular'],
+            }
+          ],
+        },
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre', 'apellido', 'email'],
+        },
+        {
+          model: DetalleOrden, // Incluimos los detalles de la orden
+          as: 'detalles',
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
+        },
+        {
+          model: DetalleOrden,
+          as: 'detalles',
+          attributes: ['id_detalle', 'id_orden', 'id_usuario', 'id_servicio', 'id_producto', 'cantidad', 'precioservicio', 'precioproducto', 'cantidad', 'preciototal', 'status'],
+          include: [
+            {
+              model: Producto,
+              as: 'producto',
+              attributes: ['nombreProducto', 'preciofinal'],
+            },
+            {
+              model: Servicio,
+              as: 'servicio',
+              attributes: ['nombre', 'preciofinal'],
+            }
+          ]
+        }
+      ]
+    });
+
+     // Si no se encuentran órdenes, devolver un arreglo vacío
+     if (!ordenes || ordenes.length === 0) {
+      return res.status(200).json([]); // Responder con un arreglo vacío
     }
 
     // Enviar la respuesta con las órdenes encontradas
@@ -272,7 +348,6 @@ export const createOrdenTrabajo = async (req, res) => {
     area,
     prioridad,
     descripcion,
-    estado,
     fecha_prometida,
     presupuesto,
     adelanto,
@@ -293,7 +368,6 @@ export const createOrdenTrabajo = async (req, res) => {
       area,
       prioridad,
       descripcion,
-      estado,
       fecha_prometida,
       presupuesto,
       adelanto,
@@ -337,7 +411,6 @@ export const updateOrdenTrabajo = async (req, res) => {
     area,
     prioridad,
     descripcion,
-    estado,
     fecha_prometida,
     presupuesto,
     adelanto,
@@ -379,7 +452,6 @@ export const updateOrdenTrabajo = async (req, res) => {
       area,
       prioridad,
       descripcion,
-      estado,
       fecha_prometida,
       presupuesto,
       adelanto,
@@ -460,31 +532,6 @@ export const deleteOrdenTrabajo = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-export const moveOrdenTrabajo = async (req, res) => {
-  const { id_orden } = req.params;
-  const { area, estado, id_usuario } = req.body;
-
-  try {
-    const ordenExistente = await OrdenTrabajo.findByPk(id_orden);
-
-    if (!ordenExistente) {
-      return res.status(404).json({ message: 'Orden de trabajo no encontrada' });
-    }
-
-    // Construye el objeto de actualización excluyendo id_usuario si es null
-    const updateData = { area, estado };
-    if (id_usuario !== null) {
-      updateData.id_usuario = id_usuario;
-    }
-
-    await ordenExistente.update(updateData);
-
-    res.status(200).json({ message: 'Área de la orden actualizada exitosamente' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 export const getOrdenesMetrics = async (req, res) => {
   try {
     const [monthlyData] = await sequelize.query(`

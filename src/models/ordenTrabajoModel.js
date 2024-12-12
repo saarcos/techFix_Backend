@@ -47,10 +47,6 @@ const OrdenTrabajo = sequelize.define('ordentrabajo', {
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
-  estado: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
-  },
   fecha_prometida: {
     type: DataTypes.DATE,
     allowNull: true,

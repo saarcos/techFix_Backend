@@ -7,12 +7,12 @@ import {
     deleteOrdenTrabajo,
     getOrdenTrabajoById,
     getOrdenTrabajoByEquipoId,
-    moveOrdenTrabajo,
     getOrdenesMetrics,
     getGlobalMetrics,
     getRecurrentClients,
     getRecentOrders,
     getMonthlyEarnings,
+    getOrdenTrabajoByClienteId,
 } from '../controllers/ordenTrabajoController.js';
 
 const router = express.Router();
@@ -35,10 +35,10 @@ router.get('/ordenes/recentOrders', getRecentOrders)
 router.get('/ordenes/:id_orden', getOrdenTrabajoById);
 // Ruta para obtener todas las ordenes de trabajo en donde consta un equipo por su id.
 router.get('/ordenes-equipo/:id_equipo', getOrdenTrabajoByEquipoId);
+// Ruta para obtener todas las ordenes de trabajo en donde consta un equipo por su id.
+router.get('/ordenes-cliente/:cliente_id', getOrdenTrabajoByClienteId);
 // Ruta para actualizar una orden de trabajo por ID
 router.put('/ordenes/:id_orden', updateOrdenTrabajo);
-// Ruta para actualizar el área de una orden de trabajo por id
-router.put('/ordenes/mover/:id_orden', moveOrdenTrabajo);
 // Ruta para eliminar una orden de trabajo por ID
 router.delete('/ordenes/:id_orden', deleteOrdenTrabajo);
 
