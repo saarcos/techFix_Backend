@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import Modelo from '../models/modelModel.js';
+import Marca from '../models/brandModel.js';
 export const modeloSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio').max(50, 'El nombre no debe exceder 50 caracteres'),
   id_marca: z.number().int()
@@ -24,7 +25,16 @@ export const createModelo = async (req, res) => {
   // Obtener todos los modelos
   export const getModelos = async (req, res) => {
     try {
-      const modelos = await Modelo.findAll();
+      const modelos = await Modelo.findAll({
+        include: [
+          {
+            model: Marca,
+            as: 'marca',
+            attributes:['nombre']
+
+          }
+        ]
+      });
       res.status(200).json(modelos);
     } catch (error) {
       res.status(500).json({ error: error.message });

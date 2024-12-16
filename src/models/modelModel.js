@@ -28,7 +28,7 @@ const Modelo = sequelize.define('Modelo', {
   timestamps: false,
 });
 
-Marca.hasMany(Modelo, { foreignKey: 'id_marca' });
+Marca.hasMany(Modelo, { foreignKey: 'id_marca', as:'marca' });
 Modelo.belongsTo(Marca, { foreignKey: 'id_marca' });
 
 export default Modelo;
