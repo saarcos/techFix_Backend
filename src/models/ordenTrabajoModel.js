@@ -48,7 +48,7 @@ const OrdenTrabajo = sequelize.define('ordentrabajo', {
     defaultValue: DataTypes.NOW,
   },
   fecha_prometida: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY,
     allowNull: true,
   },
   presupuesto: {

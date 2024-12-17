@@ -23,7 +23,7 @@ export const ordenTrabajoSchema = z.object({
   area: z.string().min(1, 'El área es obligatoria').max(50, 'El área no debe exceder 50 caracteres'),
   prioridad: z.string().min(1, 'La prioridad es obligatoria').max(50, 'La prioridad no debe exceder 50 caracteres'),
   descripcion: z.string().min(1, 'La descripción es obligatoria'),
-  fecha_prometida: z.string().transform((str) => new Date(str)).nullable().optional(),
+  fecha_prometida: z.string().transform((str) => new Date(str).toISOString().split('T')[0]).nullable().optional(),
   presupuesto: z.number().nullable().optional(),
   adelanto: z.number().nullable().optional(),
   total: z.number().nullable().optional(),
