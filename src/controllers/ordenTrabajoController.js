@@ -651,14 +651,13 @@ export const getRecentOrders = async (req, res) => {
               ORDER BY o.created_at DESC
               LIMIT 5
           ),
-          orders_this_month AS (
+          orders_completed AS (
               SELECT COUNT(*) AS total_orders
               FROM ordentrabajo
-              WHERE created_at >= date_trunc('month', CURRENT_DATE)
           )
           SELECT 
               (SELECT json_agg(recent_clients) FROM recent_clients) AS recent_clients,
-              (SELECT total_orders FROM orders_this_month) AS total_orders
+              (SELECT total_orders FROM orders_completed) AS total_orders
       `);
 
     const { recent_clients, total_orders } = results[0];
