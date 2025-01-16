@@ -534,33 +534,41 @@ export const deleteOrdenTrabajo = async (req, res) => {
 };
 export const getOrdenesMetrics = async (req, res) => {
   try {
-    const [monthlyData] = await sequelize.query(`
-      WITH monthly_data AS (
-        SELECT 
-          date_part('month', "created_at") AS month_number,
-          date_part('year', "created_at") AS year_number,
-          SUM("total") AS monthly_earnings
+    const [results] = await sequelize.query(`
+      WITH current_month AS (
+        SELECT SUM("total") AS total
         FROM "ordentrabajo"
-        WHERE "created_at" >= (CURRENT_DATE - interval '1 year')
-        GROUP BY month_number, year_number
+        WHERE "created_at" >= date_trunc('month', CURRENT_DATE)
+        AND "created_at" < (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month')
+      ),
+      previous_month AS (
+        SELECT SUM("total") AS total
+        FROM "ordentrabajo"
+        WHERE "created_at" >= date_trunc('month', CURRENT_DATE) - INTERVAL '1 month'
+        AND "created_at" < date_trunc('month', CURRENT_DATE)
       )
       SELECT 
-        current_month.monthly_earnings AS current_month_earnings,
-        COALESCE(
-          ROUND(((current_month.monthly_earnings - previous_month.monthly_earnings) / NULLIF(previous_month.monthly_earnings, 0)) * 100, 2),
-          0
-        ) AS monthly_change
-      FROM monthly_data AS current_month
-      LEFT JOIN monthly_data AS previous_month
-        ON current_month.month_number = previous_month.month_number + 1
-        AND current_month.year_number = previous_month.year_number
-      WHERE current_month.month_number = date_part('month', CURRENT_DATE)
-        AND current_month.year_number = date_part('year', CURRENT_DATE);
+        COALESCE(current_month.total, 0) AS current_month_earnings,
+        COALESCE(previous_month.total, 0) AS previous_month_earnings,
+        CASE 
+          WHEN COALESCE(previous_month.total, 0) = 0 THEN 
+            CASE WHEN COALESCE(current_month.total, 0) > 0 THEN 100 ELSE 0 END
+          ELSE 
+            ROUND(
+              ((CAST(current_month.total AS NUMERIC) - CAST(previous_month.total AS NUMERIC)) 
+              / GREATEST(CAST(previous_month.total AS NUMERIC), 1)) * 100, 2
+            )
+        END AS monthly_change
+      FROM current_month, previous_month;
     `);
+
+    const { current_month_earnings, previous_month_earnings, monthly_change } = results[0];
+
     res.status(200).json({
       monthly: {
-        earnings: monthlyData[0]?.current_month_earnings || 0,
-        change: monthlyData[0]?.monthly_change || 0,
+        earnings: current_month_earnings || 0,
+        change: monthly_change || 0,
+        previousMonthEarnings: previous_month_earnings || 0,
       },
     });
   } catch (error) {
@@ -568,6 +576,7 @@ export const getOrdenesMetrics = async (req, res) => {
     res.status(500).json({ error: 'Error al calcular métricas del dashboard' });
   }
 };
+
 export const getGlobalMetrics = async (req, res) => {
   try {
     const [result] = await sequelize.query(`
@@ -636,41 +645,48 @@ export const getRecurrentClients = async (req, res) => {
 export const getRecentOrders = async (req, res) => {
   try {
     const [results] = await sequelize.query(`
-          WITH recent_clients AS (
-              SELECT 
-                  c.id_cliente,
-                  c.nombre,
-                  c.apellido,
-                  c.correo,
-                  o.total AS total_spent,
-                  o.created_at AS last_order_date
-              FROM cliente c
-              JOIN ordentrabajo o
-                ON c.id_cliente = o.cliente_id
-              WHERE o.created_at >= date_trunc('month', CURRENT_DATE)
-              ORDER BY o.created_at DESC
-              LIMIT 5
-          ),
-          orders_completed AS (
-              SELECT COUNT(*) AS total_orders
-              FROM ordentrabajo
-          )
-          SELECT 
-              (SELECT json_agg(recent_clients) FROM recent_clients) AS recent_clients,
-              (SELECT total_orders FROM orders_completed) AS total_orders
-      `);
+      WITH recent_clients AS (
+        SELECT 
+          c.id_cliente,
+          c.nombre,
+          c.apellido,
+          c.correo,
+          o.total AS total_spent,
+          o.created_at AS last_order_date
+        FROM cliente c
+        JOIN ordentrabajo o ON c.id_cliente = o.cliente_id
+        WHERE o.created_at >= date_trunc('month', CURRENT_DATE)
+        ORDER BY o.created_at DESC
+        LIMIT 5
+      ),
+      orders_completed AS (
+        SELECT COUNT(*) AS total_orders
+        FROM ordentrabajo
+      ),
+      orders_this_month AS (
+        SELECT COUNT(*) AS total_orders_month
+        FROM ordentrabajo
+        WHERE created_at >= date_trunc('month', CURRENT_DATE)
+      )
+      SELECT 
+        (SELECT json_agg(recent_clients) FROM recent_clients) AS recent_clients,
+        (SELECT total_orders FROM orders_completed) AS total_orders,
+        (SELECT total_orders_month FROM orders_this_month) AS total_orders_month;
+    `);
 
-    const { recent_clients, total_orders } = results[0];
+    const { recent_clients, total_orders, total_orders_month } = results[0];
 
     res.status(200).json({
       recentClients: recent_clients || [],
       totalOrders: total_orders || 0,
+      totalOrdersMonth: total_orders_month || 0,
     });
   } catch (error) {
     console.error('Error al obtener métricas del dashboard:', error);
     res.status(500).json({ error: 'Error al obtener métricas del dashboard' });
   }
 };
+
 
 export const getMonthlyEarnings = async (req, res) => {
   try {
