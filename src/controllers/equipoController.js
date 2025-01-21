@@ -5,6 +5,7 @@ import Modelo from '../models/modelModel.js';
 import { z } from 'zod';
 import TipoEquipo from '../models/tipoEquipoModel.js';
 import OrdenTrabajo from '../models/ordenTrabajoModel.js'
+import { Op } from 'sequelize';
 
 export const equipoSchema = z.object({
   id_cliente: z.number().int().positive('El ID del cliente debe ser un número positivo'),
@@ -135,6 +136,14 @@ export const updateEquipo = async (req, res) => {
   try {
     const equipo = await Equipo.findByPk(id);
     if (equipo) {
+      if (equipo.nserie) {
+        const existingNserie = await Equipo.findOne({
+            where: { nserie, id_equipo: { [Op.ne]: id } }
+        });
+        if (existingNserie) {
+            return res.status(400).json({ error: 'Ya existe un equipo con ese número de serie' });
+        }
+      }
       await equipo.update({ id_cliente, id_tipoe, marca_id, id_modelo, nserie, descripcion });
       res.status(200).json(equipo);
     } else {

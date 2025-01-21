@@ -1,6 +1,7 @@
 import sequelize from '../config/sequelize.js';
 import Cliente from '../models/clientModel.js';
 import { z } from 'zod';
+import { Op } from 'sequelize';
 
 const clienteSchema = z.object({
     nombre: z.string().min(1, 'El nombre es obligatorio').max(50, 'El nombre no debe exceder 50 caracteres'),
@@ -76,17 +77,53 @@ export const getClientById = async (req, res) => {
 export const updateClient = async (req, res) => {
     const { id } = req.params;
     const result = clienteSchema.safeParse(req.body);
+
     if (!result.success) {
         return res.status(400).json({ errors: result.error.errors });
     }
+
     try {
         const client = await Cliente.findByPk(id);
-        if (client) {
-            await client.update(result.data);
-            res.status(200).json(client);
-        } else {
-            res.status(404).json({ error: 'Cliente no encontrado' });
+
+        if (!client) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
         }
+
+        const { cedula, correo, celular } = result.data;
+
+        // Verificar que la cédula no esté duplicada (excluyendo el cliente actual)
+        if (cedula) {
+            const existingCedula = await Cliente.findOne({
+                where: { cedula, id_cliente: { [Op.ne]: id } }
+            });
+            if (existingCedula) {
+                return res.status(400).json({ error: 'Ya existe un cliente con esta cédula' });
+            }
+        }
+
+        // Verificar que el correo no esté duplicado (excluyendo el cliente actual)
+        if (correo) {
+            const existingCorreo = await Cliente.findOne({
+                where: { correo, id_cliente: { [Op.ne]: id } }
+            });
+            if (existingCorreo) {
+                return res.status(400).json({ error: 'Ya existe un cliente con este correo' });
+            }
+        }
+
+        // Verificar que el celular no esté duplicado (excluyendo el cliente actual)
+        if (celular) {
+            const existingCelular = await Cliente.findOne({
+                where: { celular, id_cliente: { [Op.ne]: id } }
+            });
+            if (existingCelular) {
+                return res.status(400).json({ error: 'Ya existe un cliente con este número de celular' });
+            }
+        }
+
+        // Actualizar el cliente
+        await client.update(result.data);
+        res.status(200).json(client);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

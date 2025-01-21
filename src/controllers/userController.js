@@ -104,6 +104,44 @@ export const updateUsuario = async (req, res) => {
     res.status(500).json({error: 'Error interno del servidor'})
   }
 }
+export const updateUsuarioByTecnico = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Validar los datos de entrada
+    const schema = z.object({
+      nombre: z.string().min(1, 'El nombre es obligatorio').max(50, 'El nombre no debe exceder 50 caracteres'),
+      apellido: z.string().min(1, 'El apellido es obligatorio').max(100, 'El apellido no debe exceder 100 caracteres'),
+      email: z.string().email('Email inválido'),
+      password_hash: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    });
+
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error.errors });
+    }
+
+    const { nombre, apellido, email, password_hash } = result.data;
+
+    // Buscar el usuario por ID
+    const usuario = await Usuario.findByPk(id);
+    if (usuario) {
+      const hashedPassword = await bcrypt.hash(password_hash, saltRounds);
+      usuario.nombre = nombre;
+      usuario.apellido = apellido;
+      usuario.email = email;
+      usuario.password_hash = hashedPassword;
+
+      // Guardar los cambios
+      await usuario.save();
+      res.json(usuario);
+    } else {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+  } catch (err) {
+    console.error('Error al actualizar el usuario:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
 export const deleteUsuario = async (req, res) => {
   const { id } = req.params;
   try {
