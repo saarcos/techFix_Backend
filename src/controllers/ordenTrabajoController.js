@@ -552,7 +552,11 @@ export const getOrdenesMetrics = async (req, res) => {
         COALESCE(previous_month.total, 0) AS previous_month_earnings,
         CASE 
           WHEN COALESCE(previous_month.total, 0) = 0 THEN 
-            CASE WHEN COALESCE(current_month.total, 0) > 0 THEN 100 ELSE 0 END
+            CASE 
+              WHEN COALESCE(current_month.total, 0) > 0 THEN 100 
+              ELSE 0 
+            END
+          WHEN COALESCE(current_month.total, 0) = 0 THEN -100  -- Si no hay ingresos actuales pero sí el mes pasado, -100%
           ELSE 
             ROUND(
               ((CAST(current_month.total AS NUMERIC) - CAST(previous_month.total AS NUMERIC)) 
@@ -576,6 +580,7 @@ export const getOrdenesMetrics = async (req, res) => {
     res.status(500).json({ error: 'Error al calcular métricas del dashboard' });
   }
 };
+
 
 export const getGlobalMetrics = async (req, res) => {
   try {

@@ -182,7 +182,7 @@ export const deleteDetalleOrden = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-// Controlador: Obtener el rendimiento de los técnicos desde la tabla detalleorden
+// Controlador: Obtener el rendimiento de los técnicos en el mes actual
 export const getTechnicianPerformance = async (req, res) => {
   try {
     const [results] = await sequelize.query(`
@@ -192,6 +192,8 @@ export const getTechnicianPerformance = async (req, res) => {
       FROM "detalleorden" d
       JOIN "usuario" u ON d.id_usuario = u.id_usuario
       WHERE d.id_usuario IS NOT NULL 
+      AND d.created_at >= date_trunc('month', CURRENT_DATE) 
+      AND d.created_at < (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month')
       GROUP BY u.id_usuario, u.nombre, u.apellido
       ORDER BY total_revenue DESC
       LIMIT 5; 
